@@ -1,17 +1,14 @@
-# Verificación de entrega
+# Validación de la versión 1.1.0
 
-Fecha: 25 de octubre de 2026.
+25 de octubre de 2026.
 
-- Flutter 3.35.3 / Dart 3.9.2; análisis estático sin incidencias.
-- Tres pruebas Flutter: medidas/cantidades y serialización, acceso controlado y creación de PDF con varias piezas sin tarifa.
-- Doce pruebas del backend: comportamiento existente, permisos móviles, aislamiento, bloqueo inmediato, idempotencia, vínculos con cliente/cotización y tarifas reales.
-- Compilación web de producción y validación de Docker Compose correctas.
-- API Docker verificada por HTTP: salud, trabajadores, visitas e identidad móvil respondieron 200 con sesión administrativa.
-- APK Android debug y release compilados. Versión release interna (54.6 MB) instalada por USB en Motorola Edge 50 Fusion, Android 16/API 36.
-- Prueba automatizada completa aprobada en el Motorola: acceso a demo, visita, medidas, catálogo real de Cuarzo, bosquejo y proforma. Código en `integration_test/app_test.dart`; requiere el teléfono desbloqueado y Docker activo.
-- No se crearon trabajadores, clientes ni visitas de prueba en PostgreSQL. Las pruebas comerciales usan SQLite en memoria; la demo móvil es local.
-- La clave OpenAI existente respondió 401 `invalid_api_key`. No se confirmó generación IA real. Es necesario reemplazar la clave y contar con acceso/cuota.
-- Proyecto iOS incluido con iconos de G&M. No compilado ni instalado desde Windows; requiere Mac/Xcode y firma Apple.
+- Análisis Flutter sin incidencias.
+- Ocho pruebas Flutter aprobadas: medidas y serialización, pantalla de acceso, PDF, persistencia de apariencia/favoritos, contraste, sesión sin conexión y revocación, aislamiento de demo y HTTPS externo.
+- Prueba de integración aprobada en Motorola Edge 50 Fusion, Android 16/API 36: navegación, tema oscuro, acento azul, favorito, medidas, bosquejo y proforma. Las preferencias y datos locales de demo originales se restauran al terminar.
+- Capturas de las pantallas claras y oscuras revisadas desde el dispositivo.
+- Claves locales auditadas contra los archivos preparados para Git: sin coincidencias.
+- La clave de OpenAI suministrada se guardó únicamente en el backend local y respondió HTTP 401 al consultar el modelo. No se confirmó generación real de imágenes ni se consumió una generación de pago.
+- El mismo Docker conserva PostgreSQL, RabbitMQ, backend, cotizaciones y web. La app utiliza el puerto local por USB; no se abrieron puertos a la red.
+- Código iOS incluido; no se afirma instalación Apple desde Windows.
 
-Los APK internos usan firma de desarrollo. No equivalen a una publicación en Play Store o App Store.
-
+La instalación Android es interna y usa firma de desarrollo. Se requiere firma de producción para publicar en una tienda.

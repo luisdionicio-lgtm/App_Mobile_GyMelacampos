@@ -2,6 +2,17 @@
 
 Aplicación Flutter para visitas técnicas de G&M Melacampos, conectada al mismo backend y PostgreSQL que la web de `D:\GyMelacampos`.
 
+## Versión 1.1
+
+- Navegación con Inicio, Visitas, Materiales y Cuenta; gestos horizontales y transiciones breves.
+- Tema claro, oscuro o del sistema; acentos Dorado, Azul y Verde persistentes.
+- Ajuste para reducir animaciones y compatibilidad con la accesibilidad del teléfono.
+- Visitas con búsqueda y filtros de estado; borradores con guardado automático.
+- Catálogo visual con favoritos persistentes y detalle de material para iniciar una visita.
+- Indicador de conexión y comprobación automática al volver a la app y cada 20 segundos en primer plano.
+- Se conserva la identidad local al arrancar sin servidor; una sesión vencida se revoca al comprobarla con el backend.
+- Ayuda de conexión, privacidad y cierre de sesión local incluso si Docker está apagado.
+
 ## Flujo
 
 1. El administrador crea una cuenta en `http://localhost:8080/admin/equipo-movil` y asigna Medición, Cotización o Instalación.
@@ -23,7 +34,7 @@ flutter pub get
 flutter run -d ZY22LJ23MF
 ```
 
-La app usa `http://127.0.0.1:8080`. `adb reverse tcp:8080 tcp:8080` conecta ese puerto del teléfono con Docker en el equipo. Al desconectar el USB o reiniciar, vuelve a ejecutar el script. Para otro servidor usa Configurar conexión en el inicio de sesión o `--dart-define=API_BASE_URL=https://servidor` al compilar. Fuera del enlace USB, configura un backend alcanzable con HTTPS; localhost del teléfono no es el equipo.
+La app usa `http://127.0.0.1:8080`. `adb reverse tcp:8080 tcp:8080` conecta ese puerto del teléfono con Docker en el equipo. En este equipo se activó el asistente local de Windows que restablece el enlace al reconectar el Motorola. Para activarlo en otra instalación: `./scripts/activar-conexion-automatica.ps1`; para detenerlo y quitarlo del inicio: `./scripts/desactivar-conexion-automatica.ps1`. Revisa el enlace cada 12 segundos y solo actúa sobre este dispositivo y el puerto 8080. Si no utilizas el asistente, vuelve a ejecutar el script de conexión tras reiniciar o reconectar. Para otro servidor usa Configurar conexión en el inicio de sesión o `--dart-define=API_BASE_URL=https://servidor` al compilar. Fuera del enlace USB, configura un backend alcanzable con HTTPS; la app rechaza direcciones HTTP externas para proteger la sesión. Localhost del teléfono no es el equipo. La instalación es permanente: no necesita Flutter ejecutándose para abrirse. Docker y USB siguen siendo necesarios para acceder al servidor local.
 
 ```powershell
 flutter analyze
@@ -53,7 +64,7 @@ No se crea otra base de datos ni otro Docker. `integration/web/` contiene las fu
 - **Instalación:** consulta visitas propias o asignadas; no crea propuestas ni genera imágenes.
 - Los permisos se comprueban en cada petición contra la base de datos. Bloquear un usuario invalida el acceso de sus sesiones abiertas.
 
-Los borradores y la cookie de sesión se almacenan mediante almacenamiento seguro del sistema. Los borradores se separan por servidor y usuario. Las fotos se copian al almacenamiento privado de la aplicación. El catálogo se puede consultar desde caché textual; las imágenes requieren red. El borrador sobrevive al cierre; enviar o calcular precios reales requiere conexión. No hay sincronización automática en segundo plano.
+Los borradores y la cookie de sesión se almacenan mediante almacenamiento seguro del sistema. Los borradores se separan por servidor y usuario. Las fotos se copian al almacenamiento privado de la aplicación. El catálogo se puede consultar desde caché textual; las imágenes requieren red. El borrador se guarda automáticamente después de editarlo y sobrevive al cierre; enviar o calcular precios reales requiere conexión. La demo también conserva sus borradores en un espacio local separado. No hay sincronización automática en segundo plano.
 
 ## Cálculos y límites
 
@@ -63,7 +74,7 @@ El bosquejo representa rectángulos independientes, no un levantamiento automát
 
 La imagen IA usa ambiente, nombre del material y medidas como referencia semántica. No reproduce garantizadamente la veta exacta, no edita la foto del cliente ni garantiza dimensiones geométricas. El bosquejo es la referencia dimensional. La foto es evidencia administrativa.
 
-`OPENAI_API_KEY` se configura únicamente en `.env` del proyecto web. Se usa Images API y `OPENAI_IMAGE_MODEL` (predeterminado `gpt-image-1`). Si se desea otro modelo, añadir esa variable al entorno Compose del backend. Tras cambiar `.env`: `docker compose up -d --force-recreate backend`. La clave existente respondió HTTP 401 `invalid_api_key` durante la verificación; la generación real está pendiente de una clave válida con acceso y cuota. No se gastó una generación durante las pruebas.
+`OPENAI_API_KEY` se configura únicamente en `.env` del proyecto web. Se usa Images API y `OPENAI_IMAGE_MODEL` (predeterminado `gpt-image-1`). Si se desea otro modelo, añadir esa variable al entorno Compose del backend. Tras cambiar `.env`: `docker compose up -d --force-recreate backend`. La clave proporcionada para esta actualización se guardó solo en el `.env` local y también respondió HTTP 401 durante la verificación; la generación real está pendiente de una clave válida con acceso y cuota. No se gastó una generación durante las pruebas.
 
 ## Arquitectura
 
