@@ -19,3 +19,12 @@ La instalación Android es interna y usa firma de desarrollo. Se requiere firma 
 - Compilación de producción de la web y validación Compose aprobadas; backend y frontend reconstruidos en Docker conservando los volúmenes.
 - Dos cuentas móviles creadas por solicitud del propietario: Medición móvil y Cotización móvil. Inicio de sesión, identidad, consulta de visitas y cálculo compartido verificados por HTTP contra Docker. Acceso administrativo rechazado para ambas.
 - No se crearon clientes ni visitas ficticios durante la validación operativa. Las credenciales quedaron en un archivo privado local excluido de Git.
+
+## Validación Wi-Fi 1.2
+
+- Equipo y Motorola conectados a DIONICIO-2.4G-GQUD, misma subred.
+- HTTPS local con validación de certificado y API PostgreSQL verificado en la IP Wi-Fi.
+- Firewall limitado a TCP 8443 por Wi-Fi y subred local.
+- Ambas cuentas de trabajador autenticadas por HTTPS.
+- Once pruebas Flutter y análisis estático aprobados, incluida la acción Guardar en admin. Integración en Motorola aprobada usando la URL HTTPS Wi-Fi para catálogo, temas, favoritos y proforma; USB solo transportó la instalación y el controlador de pruebas.
+- Guardar en admin envía medidas y cotización al flujo existente; borradores y demo permanecen explícitamente locales.

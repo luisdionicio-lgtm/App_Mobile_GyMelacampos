@@ -16,13 +16,46 @@ class ApiException implements Exception {
 
 class Api {
   static const storage = FlutterSecureStorage();
-  String base = const String.fromEnvironment(
+  static const defaultBase = String.fromEnvironment(
     'API_BASE_URL',
     defaultValue: 'http://127.0.0.1:8080',
   );
+  String base = defaultBase;
   String? cookie;
+  static bool isUsbBridge(String value) {
+    final uri = Uri.tryParse(value);
+    return uri != null &&
+        uri.scheme == 'http' &&
+        ['127.0.0.1', 'localhost'].contains(uri.host) &&
+        uri.port == 8080;
+  }
+
   Future<void> init() async {
-    base = await storage.read(key: 'server') ?? base;
+    final saved = await storage.read(key: 'server');
+    base = saved ?? defaultBase;
+    if (defaultBase.startsWith('https://') &&
+        (saved == null || isUsbBridge(saved))) {
+      final old = saved ?? 'http://127.0.0.1:8080';
+      final records = await storage.readAll();
+      for (final entry in records.entries) {
+        String? target;
+        if (entry.key.startsWith('visits:$old:')) {
+          target =
+              'visits:$defaultBase${entry.key.substring(('visits:$old').length)}';
+        }
+        if (entry.key == 'catalog:$old') {
+          target = 'catalog:$defaultBase';
+        }
+        if (target != null && !records.containsKey(target)) {
+          await storage.write(key: target, value: entry.value);
+        }
+      }
+      if (saved != defaultBase) {
+        await storage.delete(key: 'session');
+      }
+      base = defaultBase;
+      await storage.write(key: 'server', value: base);
+    }
     cookie = await storage.read(key: 'session');
   }
 

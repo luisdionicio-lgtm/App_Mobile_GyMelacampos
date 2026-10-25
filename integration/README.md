@@ -37,3 +37,9 @@ Rutas nuevas:
 La creación de solicitud y outbox conserva la transacción existente. La visita usa una segunda transacción y conserva el UUID para que un reintento recupere la misma cotización si ocurre un corte entre ambas. La cola de cotizaciones sigue procesando solicitudes y pedidos como antes.
 
 Las contraseñas restablecidas y los bloqueos incrementan la versión de autenticación de la cuenta; las sesiones previas quedan invalidadas. Los administradores existentes mantienen compatibilidad con sus sesiones actuales. El correo del trabajador es un identificador fijo.
+
+## Wi-Fi y guardado en administración
+
+La versión 1.2 usa HTTPS local por Wi-Fi y añade la acción explícita «Guardar en admin». El frontend web muestra la solicitud de cotización vinculada a cada visita. Los cambios de `compose.override.yaml`, `deploy/Caddyfile`, el script de firewall y el README están en el repositorio web; al clonar su rama main ya se incluyen, sin aplicar nuevamente el parche anterior.
+
+La IP de la red es configuración local del `.env`, nunca una credencial. La app incluye únicamente el certificado público de la autoridad de pruebas; las claves privadas permanecen en el volumen de Docker.

@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:gm_campo/main.dart';
 import 'package:gm_campo/core/api.dart';
+import 'package:gm_campo/core/local_tls.dart';
 import 'package:gm_campo/core/preferences.dart';
 import 'package:gm_campo/features/visits/domain/visit.dart';
 import 'package:gm_campo/features/visits/presentation/sketch.dart';
@@ -27,6 +28,7 @@ void main() {
   testWidgets(
     'Motorola: navigation, themes, favorites, measurements and proposal',
     (tester) async {
+      await configureLocalTls();
       final api = Api();
       await api.init();
       final prefs = AppPreferences();

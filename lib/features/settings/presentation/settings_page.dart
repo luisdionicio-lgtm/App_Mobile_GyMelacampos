@@ -158,12 +158,12 @@ class SettingsPage extends StatelessWidget {
         ListTile(
           contentPadding: EdgeInsets.zero,
           leading: const Icon(Icons.help_outline),
-          title: const Text('Cómo conectar con Docker'),
+          title: const Text('Conectar por Wi-Fi'),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => information(
             context,
             'Tu móvil y la web',
-            'Mantén el Motorola conectado por USB y Docker encendido. El enlace local usa el puerto 8080. El asistente del equipo restablece ese enlace al reconectar el celular.\n\nLa app comprueba el servidor al abrirse y cada 20 segundos mientras está en primer plano. Si Docker está apagado, puedes continuar guardando borradores.\n\nPara trabajar fuera de este equipo necesitas un servidor HTTPS accesible desde el teléfono.',
+            'Conecta el celular y el equipo a la misma red Wi-Fi, y mantén Docker encendido. Esta versión puede usar HTTPS local por Wi-Fi: no necesita USB, depuración ni modo desarrollador.\n\nLa app comprueba el servidor al abrirse y cada 20 segundos mientras está en primer plano. Si Docker está apagado, puedes continuar guardando borradores.\n\nEn el inicio de sesión puedes configurar la URL HTTPS del servidor. Si cambia la IP del equipo, actualiza esa dirección. Para otra instalación hay que generar y exportar su certificado público según el README. Fuera de la red local necesitas un servidor HTTPS accesible.',
           ),
         ),
         ListTile(
@@ -181,7 +181,7 @@ class SettingsPage extends StatelessWidget {
           contentPadding: EdgeInsets.zero,
           leading: const Icon(Icons.info_outline),
           title: const Text('G&M Campo'),
-          subtitle: const Text('Versión 1.1.0 · Visitas técnicas'),
+          subtitle: const Text('Versión 1.2.0 · Visitas técnicas'),
           onTap: () => information(
             context,
             'G&M Campo',

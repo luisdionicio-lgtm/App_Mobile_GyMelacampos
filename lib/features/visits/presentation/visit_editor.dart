@@ -150,6 +150,31 @@ class _EditorState extends State<VisitEditor> {
     });
   }
 
+  Future<void> saveToAdmin() async {
+    if (repo.session.demo) {
+      collect();
+      await repo.save(visit);
+      if (mounted) Navigator.pop(context);
+      return;
+    }
+    if (visit.synced) {
+      Navigator.pop(context);
+      return;
+    }
+    if (!form.currentState!.validate()) return;
+    collect();
+    if (visit.materialId.isEmpty) {
+      showError(
+        context,
+        'Selecciona un material para guardar la cotización en administración.',
+      );
+      return;
+    }
+    await repo.save(visit);
+    await send();
+    if (mounted && visit.synced && visit.photo == null) Navigator.pop(context);
+  }
+
   Future<void> send() async {
     await run(() async {
       await repo.send(visit);
@@ -223,14 +248,14 @@ class _EditorState extends State<VisitEditor> {
         actions: [
           if (step == 0)
             TextButton(
-              onPressed: busy
-                  ? null
-                  : () async {
-                      collect();
-                      await repo.save(visit);
-                      if (context.mounted) Navigator.pop(context);
-                    },
-              child: const Text('Guardar'),
+              onPressed: busy ? null : saveToAdmin,
+              child: Text(
+                repo.session.demo
+                    ? 'Guardar demo'
+                    : visit.synced
+                    ? 'Cerrar'
+                    : 'Guardar en admin',
+              ),
             ),
         ],
       ),
@@ -423,7 +448,7 @@ class _EditorState extends State<VisitEditor> {
                   ),
                 const SizedBox(height: 24),
                 const Note(
-                  "Tu borrador se guarda automáticamente en este teléfono.",
+                  "El borrador se guarda automáticamente en este teléfono. Usa «Guardar en admin» para enviar medidas y cotización a la web.",
                   icon: Icons.save_outlined,
                 ),
               ] else ...[

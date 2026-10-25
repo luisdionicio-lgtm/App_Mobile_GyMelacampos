@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'core/api.dart';
+import 'core/local_tls.dart';
 import 'core/preferences.dart';
 import 'core/theme.dart';
 import 'features/auth/login.dart';
@@ -7,6 +8,7 @@ import 'features/workspace/presentation/workspace.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await configureLocalTls();
   final api = Api();
   await api.init();
   final preferences = AppPreferences();

@@ -95,3 +95,36 @@ Identidad adaptada del componente Logo.tsx de la web: monograma G rojo, &M azul 
 El módulo de administración está en `http://localhost:8080/admin/equipo-movil`. Permite crear cuentas, editar nombres, asignar roles, bloquear/reactivar accesos y restablecer contraseñas. Solo el administrador web puede utilizarlo. Los perfiles operativos de Medición móvil y Cotización móvil fueron creados en la base PostgreSQL local por solicitud del propietario. No se distribuyen contraseñas ni usuarios precargados en Git. Las credenciales locales se guardan en `.local/Accesos-trabajadores-GM.txt`, excluido del repositorio.
 
 Las modificaciones se registran en auditoría sin guardar contraseñas en texto plano. El backend almacena las contraseñas con scrypt y comprueba los permisos y la versión de sesión en cada solicitud.
+
+## Tu propia red Wi-Fi sin modo desarrollador
+
+Conecta el teléfono y el equipo a la misma red. La configuración local actual utiliza **DIONICIO-2.4G-GQUD** y `https://192.168.18.103:8443`. Es una dirección privada de esta instalación; para tu equipo utiliza su propia IP Wi-Fi.
+
+```powershell
+cd D:\App_Mobile_GyMelacampos_
+.\scripts\configurar-wifi.ps1 -WebRoot D:\GyMelacampos -Flutter D:\flutter\flutter\bin\flutter.bat -Build
+```
+
+El script detecta el Wi-Fi del equipo, configura `LAN_BIND_IP` en el `.env` de la web, inicia el servicio HTTPS de `compose.override.yaml`, exporta el certificado público y compila el APK apuntando a esa IP. La red debe permitir comunicación entre dispositivos; no hace falta conocer ni guardar la contraseña del Wi-Fi en la app.
+
+Si necesitas permitir el acceso en el firewall, ejecuta como administrador desde la carpeta web:
+
+```powershell
+.\scripts\permitir-wifi.ps1 -ServerIP IP_DEL_EQUIPO
+```
+
+La regla se limita a Wi-Fi, TCP 8443 y la subred local. La app usa HTTPS y verifica el certificado; no incluye claves privadas ni claves de OpenAI. La autoridad local se conserva dentro de un volumen de Docker, y solo su certificado público se incluye en `assets/lan-root-ca.pem`.
+
+Instala `build/app/outputs/flutter-apk/app-release.apk`. Puedes instalarlo por USB una vez o descargarlo al teléfono y abrir el instalador de Android. Esta última opción no necesita modo desarrollador, aunque Android puede solicitar permiso para instalar desde esa aplicación. Después abre G&M Campo, inicia sesión con tu cuenta de trabajador y mantén Docker activo. El USB se puede retirar y la depuración desactivar: el tráfico usa la red Wi-Fi.
+
+Al actualizar una instalación que antes usaba localhost/USB, el APK Wi-Fi copia los borradores y el catálogo locales a la nueva dirección sin eliminar los originales y pide iniciar sesión de nuevo. Si eliges explícitamente otro servidor HTTPS, la app respeta esa configuración.
+
+Si cambia la IP del equipo, actualiza el servicio y la URL desde «Configurar conexión» en el inicio de sesión. Para conservarla entre reinicios conviene reservarla en el router. Al probar con otra instalación de Docker, exporta su certificado antes de recompilar; no copies claves privadas. Un APK compilado con otro certificado no confiará automáticamente en esa instalación.
+
+Para volver al modo USB se puede configurar `http://127.0.0.1:8080` y ejecutar el asistente USB con depuración habilitada. El Wi-Fi y la web siguen compartiendo los mismos clientes, cuentas y visitas; no se crean servidores de datos alternativos.
+
+### Guardado de medidas y cotización
+
+En una cuenta de trabajador, **Guardar en admin** envía el formulario válido, medidas, piezas, material y cotización al backend compartido. La visita queda visible en «Equipo móvil» y la solicitud vinculada aparece en «Cotizaciones». El detalle administrativo muestra el vínculo entre ambos registros. «Enviar visita al administrador» desde la proforma conserva el mismo flujo.
+
+El guardado automático es un borrador local: permite continuar sin conexión o con campos incompletos. Si falla la red al enviar, el borrador permanece en el teléfono para reintentar; no se indica como enviado. La demo guarda únicamente datos locales.
