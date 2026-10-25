@@ -23,7 +23,7 @@ Si `--check` falla, revisar diferencias antes de integrar; no sobrescribir códi
 Rutas nuevas:
 
 - `GET/POST /api/admin/workers`: listar/crear trabajadores (solo administrador).
-- `PATCH /api/admin/workers/:email`: rol, bloqueo y restablecimiento de contraseña.
+- `PATCH /api/admin/workers/:email`: nombre, rol, bloqueo y restablecimiento de contraseña.
 - `GET/PATCH /api/admin/visits`: revisión y asignación (PATCH usa `/:id`).
 - `GET /api/mobile/me`: identidad y rol vigentes.
 - `GET /api/mobile/visits`: visitas propias o asignadas.
@@ -35,3 +35,5 @@ Rutas nuevas:
 - `/admin/equipo-movil`: pantalla web de administración.
 
 La creación de solicitud y outbox conserva la transacción existente. La visita usa una segunda transacción y conserva el UUID para que un reintento recupere la misma cotización si ocurre un corte entre ambas. La cola de cotizaciones sigue procesando solicitudes y pedidos como antes.
+
+Las contraseñas restablecidas y los bloqueos incrementan la versión de autenticación de la cuenta; las sesiones previas quedan invalidadas. Los administradores existentes mantienen compatibilidad con sus sesiones actuales. El correo del trabajador es un identificador fijo.

@@ -59,10 +59,10 @@ Configurar el servidor HTTPS accesible desde el iPhone. Esta entrega se valida e
 
 No se crea otra base de datos ni otro Docker. `integration/web/` contiene las fuentes que amplían el proyecto web; consultar `integration/README.md`. Los volúmenes existentes se mantienen. Las cuentas administrativas anteriores conservan su rol; las cuentas nuevas solo pueden ser creadas por un administrador. No hay registro público.
 
-- **Administrador:** gestiona trabajadores, roles, bloqueo, restablecimiento de contraseña y revisión/asignación de visitas.
+- **Administrador:** gestiona trabajadores, edición de nombres, roles, bloqueo, restablecimiento de contraseña y revisión/asignación de visitas. El correo permanece como identificador fijo de acceso.
 - **Medición y Cotización:** registran sus propias visitas, calculan propuestas y solicitan imágenes.
 - **Instalación:** consulta visitas propias o asignadas; no crea propuestas ni genera imágenes.
-- Los permisos se comprueban en cada petición contra la base de datos. Bloquear un usuario invalida el acceso de sus sesiones abiertas.
+- Los permisos se comprueban en cada petición contra la base de datos. Bloquear un usuario o restablecer su contraseña invalida sus sesiones anteriores. Reactivar la cuenta exige iniciar sesión de nuevo; las sesiones antiguas no recuperan acceso.
 
 Los borradores y la cookie de sesión se almacenan mediante almacenamiento seguro del sistema. Los borradores se separan por servidor y usuario. Las fotos se copian al almacenamiento privado de la aplicación. El catálogo se puede consultar desde caché textual; las imágenes requieren red. El borrador se guarda automáticamente después de editarlo y sobrevive al cierre; enviar o calcular precios reales requiere conexión. La demo también conserva sus borradores en un espacio local separado. No hay sincronización automática en segundo plano.
 
@@ -89,3 +89,9 @@ La imagen IA usa ambiente, nombre del material y medidas como referencia semánt
 
 Identidad adaptada del componente Logo.tsx de la web: monograma G rojo, &M azul y Melacampos. Fuentes DM Sans y Playfair Display con licencias OFL incluidas. La textura de portada procede de los recursos originales de G&M.
 
+
+## Cuentas de trabajadores
+
+El módulo de administración está en `http://localhost:8080/admin/equipo-movil`. Permite crear cuentas, editar nombres, asignar roles, bloquear/reactivar accesos y restablecer contraseñas. Solo el administrador web puede utilizarlo. Los perfiles operativos de Medición móvil y Cotización móvil fueron creados en la base PostgreSQL local por solicitud del propietario. No se distribuyen contraseñas ni usuarios precargados en Git. Las credenciales locales se guardan en `.local/Accesos-trabajadores-GM.txt`, excluido del repositorio.
+
+Las modificaciones se registran en auditoría sin guardar contraseñas en texto plano. El backend almacena las contraseñas con scrypt y comprueba los permisos y la versión de sesión en cada solicitud.

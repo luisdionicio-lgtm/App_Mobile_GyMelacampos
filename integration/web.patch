@@ -85,7 +85,7 @@ index 0000000..284f427
 +  };
 +}
 diff --git a/backend/src/infrastructure/auth.js b/backend/src/infrastructure/auth.js
-index 1b92131..6d2db23 100644
+index 1b92131..e6d9b7d 100644
 --- a/backend/src/infrastructure/auth.js
 +++ b/backend/src/infrastructure/auth.js
 @@ -1,10 +1,10 @@
@@ -103,7 +103,7 @@ index 1b92131..6d2db23 100644
    if (
      !email ||
      !password ||
-@@ -14,42 +14,62 @@ export async function initializeAuth(db) {
+@@ -14,42 +14,72 @@ export async function initializeAuth(db) {
    )
      throw Error(
        "Configura ADMIN_EMAIL, ADMIN_PASSWORD (12 caracteres) y JWT_SECRET (32 caracteres)",
@@ -137,7 +137,13 @@ index 1b92131..6d2db23 100644
 +        throw new AppError("Correo o contraseña incorrectos", 401);
        return {
          token: jwt.sign(
-           { sub: user.id, email: user.email, name: user.name },
+-          { sub: user.id, email: user.email, name: user.name },
++          {
++            sub: user.id,
++            email: user.email,
++            name: user.name,
++            version: user.authVersion || 0,
++          },
            secret,
            { expiresIn: "8h" },
          ),
@@ -157,7 +163,12 @@ index 1b92131..6d2db23 100644
 -        next()
 +        const claims = jwt.verify(req.cookies.session, secret);
 +        const user = await db.get("users", claims.sub);
-+        if (!user || user.disabled) throw Error();
++        if (
++          !user ||
++          user.disabled ||
++          (claims.version || 0) !== (user.authVersion || 0)
++        )
++          throw Error();
 +        req.user = {
 +          sub: user.id,
 +          ...{ email: user.email, name: user.name, role: user.role || "admin" },
@@ -181,7 +192,7 @@ index 1b92131..6d2db23 100644
      cookie: {
        httpOnly: true,
        sameSite: "strict",
-@@ -57,5 +77,5 @@ export async function initializeAuth(db) {
+@@ -57,5 +87,5 @@ export async function initializeAuth(db) {
        maxAge: 8 * 60 * 60 * 1000,
        path: "/",
      },
@@ -219,10 +230,10 @@ index c24f70f..7f5fe68 100644
    admin.put("/settings", async (req, res) =>
 diff --git a/backend/src/presentation/mobile.js b/backend/src/presentation/mobile.js
 new file mode 100644
-index 0000000..31cf773
+index 0000000..26b327a
 --- /dev/null
 +++ b/backend/src/presentation/mobile.js
-@@ -0,0 +1,311 @@
+@@ -0,0 +1,329 @@
 +import { submitFieldQuote } from "../application/mobile-service.js";
 +import { visitInput, quantities } from "../domain/mobile-visit.js";
 +import express from "express";
@@ -272,26 +283,44 @@ index 0000000..31cf773
 +  admin.patch("/workers/:email", async (req, res) => {
 +    const data = z
 +      .object({
++        name: z.string().trim().min(2).max(120).optional(),
 +        role: z.enum(["medicion", "cotizacion", "instalacion"]).optional(),
 +        disabled: z.boolean().optional(),
 +        password: z.string().min(12).max(200).optional(),
 +      })
++      .strict()
 +      .parse(req.body);
-+    const user = await db.get("users", req.params.email);
-+    if (!user) throw new AppError("Trabajador no encontrado", 404);
-+    if ((user.role || "admin") === "admin")
-+      throw new AppError(
-+        "La cuenta administrativa no se modifica desde trabajadores",
-+        403,
-+      );
-+    if (data.password) {
-+      user.salt = randomBytes(16).toString("hex");
-+      user.hash = scryptSync(data.password, user.salt, 64).toString("hex");
-+    }
-+    if (data.role) user.role = data.role;
-+    if (data.disabled !== undefined) user.disabled = data.disabled;
-+    await db.put("users", user);
-+    res.json(cleanUser(user));
++    const result = await db.transaction(async (tx) => {
++      const user = await tx.get("users", req.params.email);
++      if (!user) throw new AppError("Trabajador no encontrado", 404);
++      if ((user.role || "admin") === "admin")
++        throw new AppError(
++          "La cuenta administrativa no se modifica desde trabajadores",
++          403,
++        );
++      if (data.password) {
++        user.salt = randomBytes(16).toString("hex");
++        user.hash = scryptSync(data.password, user.salt, 64).toString("hex");
++      }
++      if (data.password || (data.disabled === true && !user.disabled))
++        user.authVersion = (user.authVersion || 0) + 1;
++      if (data.name) user.name = data.name;
++      if (data.role) user.role = data.role;
++      if (data.disabled !== undefined) user.disabled = data.disabled;
++      user.updatedAt = new Date().toISOString();
++      await tx.put("users", user);
++      await tx.put("audit", {
++        id: randomUUID(),
++        kind: "users",
++        action: "Cuenta de trabajador actualizada",
++        recordId: user.id,
++        actor: req.user.email,
++        at: user.updatedAt,
++        fields: Object.keys(data),
++      });
++      return cleanUser(user);
++    });
++    res.json(result);
 +  });
 +  admin.get("/visits", async (req, res) => res.json(await db.list("visits")));
 +  admin.patch("/visits/:id", async (req, res) => {
@@ -562,10 +591,10 @@ index 5594de3..00533f7 100644
    const server = app.listen(0, "127.0.0.1")
 diff --git a/backend/test/mobile.test.js b/backend/test/mobile.test.js
 new file mode 100644
-index 0000000..6674da6
+index 0000000..7f96f96
 --- /dev/null
 +++ b/backend/test/mobile.test.js
-@@ -0,0 +1,168 @@
+@@ -0,0 +1,240 @@
 +import { test } from "node:test";
 +import assert from "node:assert/strict";
 +import { randomUUID } from "node:crypto";
@@ -720,6 +749,62 @@ index 0000000..6674da6
 +      ).status,
 +      200,
 +    );
++    const changed = await call(
++      "/admin/workers/medidor%40test.invalid",
++      "PATCH",
++      { name: "Operador de medición" },
++      admin,
++    );
++    assert.equal(changed.status, 200);
++    assert.equal((await changed.json()).name, "Operador de medición");
++    assert.equal(
++      (await (await call("/mobile/me", "GET", null, worker)).json()).name,
++      "Operador de medición",
++    );
++    assert.equal(
++      (
++        await call(
++          "/admin/workers/medidor%40test.invalid",
++          "PATCH",
++          { name: "Intruso" },
++          worker,
++        )
++      ).status,
++      403,
++    );
++    assert.equal(
++      (
++        await call(
++          "/admin/workers/medidor%40test.invalid",
++          "PATCH",
++          { name: "" },
++          admin,
++        )
++      ).status,
++      400,
++    );
++    const reset = await call(
++      "/admin/workers/medidor%40test.invalid",
++      "PATCH",
++      { password: "new-worker-password-456" },
++      admin,
++    );
++    assert.equal(reset.status, 200);
++    assert.equal((await reset.json()).hash, undefined);
++    assert.equal((await call("/mobile/me", "GET", null, worker)).status, 401);
++    assert.equal(
++      (
++        await call("/auth/login", "POST", {
++          email: "medidor@test.invalid",
++          password: "worker-password-123",
++        })
++      ).status,
++      401,
++    );
++    const renewed = await login(
++      "medidor@test.invalid",
++      "new-worker-password-456",
++    );
 +    await call(
 +      "/admin/workers/medidor%40test.invalid",
 +      "PATCH",
@@ -727,6 +812,22 @@ index 0000000..6674da6
 +      admin,
 +    );
 +    assert.equal((await call("/mobile/me", "GET", null, worker)).status, 401);
++    assert.equal((await call("/mobile/me", "GET", null, renewed)).status, 401);
++    await call(
++      "/admin/workers/medidor%40test.invalid",
++      "PATCH",
++      { disabled: false, role: "cotizacion" },
++      admin,
++    );
++    assert.equal((await call("/mobile/me", "GET", null, renewed)).status, 401);
++    const active = await login(
++      "medidor@test.invalid",
++      "new-worker-password-456",
++    );
++    assert.equal(
++      (await (await call("/mobile/me", "GET", null, active)).json()).role,
++      "cotizacion",
++    );
 +    const data = await (await call("/admin/visits", "GET", null, admin)).json();
 +    assert.equal(data[0].status, "Validada");
 +  } finally {
@@ -786,10 +887,10 @@ index 9c41a7c..122c288 100644
    ) : (
 diff --git a/frontend/src/pages/admin/MobileTeam.tsx b/frontend/src/pages/admin/MobileTeam.tsx
 new file mode 100644
-index 0000000..a088197
+index 0000000..0aaa2e5
 --- /dev/null
 +++ b/frontend/src/pages/admin/MobileTeam.tsx
-@@ -0,0 +1,418 @@
+@@ -0,0 +1,453 @@
 +import { useEffect, useState } from "react";
 +import { api } from "../../lib/api";
 +import Topbar from "../../components/admin/Topbar";
@@ -870,7 +971,7 @@ index 0000000..a088197
 +      });
 +      await load();
 +      setMessage(
-+        "Permisos actualizados. Se aplican también a las sesiones abiertas.",
++        "Perfil actualizado. Los cambios de contraseña o bloqueo cierran las sesiones anteriores.",
 +      );
 +    } catch (e) {
 +      setMessage(String(e));
@@ -898,7 +999,7 @@ index 0000000..a088197
 +    <div>
 +      <Topbar
 +        title="Equipo y visitas móviles"
-+        subtitle="Accesos del personal y propuestas registradas en campo"
++        subtitle="Administración de cuentas, roles y visitas del personal"
 +      />
 +      <main className="p-6 space-y-8">
 +        <p role="status">{message}</p>
@@ -973,10 +1074,45 @@ index 0000000..a088197
 +                  className="card p-4 flex flex-wrap gap-4 items-center"
 +                  key={w.email}
 +                >
-+                  <div className="flex-1 min-w-40">
-+                    <strong>{w.name}</strong>
-+                    <p>{w.email}</p>
-+                  </div>
++                  <form
++                    className="flex-1 min-w-52 space-y-2"
++                    onSubmit={async (e) => {
++                      e.preventDefault();
++                      await update(w.email, {
++                        name: new FormData(e.currentTarget).get("name"),
++                      });
++                    }}
++                  >
++                    <label className="block">
++                      Nombre del trabajador
++                      <input
++                        key={w.name}
++                        name="name"
++                        aria-label={"Nombre de " + w.email}
++                        className="input-base mt-1"
++                        defaultValue={w.name}
++                        required
++                        minLength={2}
++                        maxLength={120}
++                      />
++                    </label>
++                    <p className="text-sm">{w.email}</p>
++                    <p
++                      className="text-xs"
++                      style={{ color: "var(--text-muted)" }}
++                    >
++                      El correo es su identificador fijo para iniciar sesión.
++                    </p>
++                    <button
++                      disabled={busy}
++                      className="px-4 py-2 border rounded-md"
++                    >
++                      Guardar nombre
++                    </button>
++                    <span className="ml-3 text-sm font-medium">
++                      {w.disabled ? "Acceso bloqueado" : "Acceso activo"}
++                    </span>
++                  </form>
 +                  <label>
 +                    Rol
 +                    <select

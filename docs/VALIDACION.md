@@ -12,3 +12,10 @@
 - Código iOS incluido; no se afirma instalación Apple desde Windows.
 
 La instalación Android es interna y usa firma de desarrollo. Se requiere firma de producción para publicar en una tienda.
+
+## Administración de trabajadores
+
+- Doce pruebas backend aprobadas, ampliadas con edición de nombre, rechazo de cambios sin permiso, restablecimiento de contraseña y revocación de sesiones tras bloqueo/reactivación.
+- Compilación de producción de la web y validación Compose aprobadas; backend y frontend reconstruidos en Docker conservando los volúmenes.
+- Dos cuentas móviles creadas por solicitud del propietario: Medición móvil y Cotización móvil. Inicio de sesión, identidad, consulta de visitas y cálculo compartido verificados por HTTP contra Docker. Acceso administrativo rechazado para ambas.
+- No se crearon clientes ni visitas ficticios durante la validación operativa. Las credenciales quedaron en un archivo privado local excluido de Git.
