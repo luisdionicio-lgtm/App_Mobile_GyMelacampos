@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -20,6 +21,7 @@ class _EditorState extends State<VisitEditor> {
   late Visit visit;
   final form = GlobalKey<FormState>();
   final scrollController = ScrollController();
+  Timer? _autosave;
   bool busy = false;
   int step = 0;
   String? imageUrl;
@@ -43,11 +45,27 @@ class _EditorState extends State<VisitEditor> {
 
   @override
   void dispose() {
+    _autosave?.cancel();
+    if (!visit.synced) {
+      collect();
+      unawaited(repo.save(visit));
+    }
     for (final c in [client, phone, location, notes]) {
       c.dispose();
     }
     scrollController.dispose();
     super.dispose();
+  }
+
+  void queueSave() {
+    if (visit.synced) return;
+    _autosave?.cancel();
+    _autosave = Timer(const Duration(milliseconds: 700), () {
+      if (mounted) {
+        collect();
+        unawaited(repo.save(visit));
+      }
+    });
   }
 
   void collect() {
@@ -75,6 +93,7 @@ class _EditorState extends State<VisitEditor> {
       return;
     }
     if (!form.currentState!.validate()) return;
+    FocusScope.of(context).unfocus();
     collect();
     if (visit.materialId.isEmpty) {
       showError(context, 'Selecciona un material del catálogo');
@@ -215,6 +234,18 @@ class _EditorState extends State<VisitEditor> {
             ),
         ],
       ),
+      bottomNavigationBar: step == 0
+          ? SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(22, 10, 22, 12),
+                child: FilledButton.icon(
+                  onPressed: busy ? null : preview,
+                  icon: const Icon(Icons.architecture),
+                  label: const Text('Generar bosquejo y proforma'),
+                ),
+              ),
+            )
+          : null,
       body: SafeArea(
         child: Form(
           key: form,
@@ -391,10 +422,9 @@ class _EditorState extends State<VisitEditor> {
                     ],
                   ),
                 const SizedBox(height: 24),
-                FilledButton.icon(
-                  onPressed: busy ? null : preview,
-                  icon: const Icon(Icons.architecture),
-                  label: const Text('Generar bosquejo y proforma'),
+                const Note(
+                  "Tu borrador se guarda automáticamente en este teléfono.",
+                  icon: Icons.save_outlined,
                 ),
               ] else ...[
                 heading(visit.project),
@@ -412,7 +442,7 @@ class _EditorState extends State<VisitEditor> {
                 Container(
                   padding: const EdgeInsets.all(22),
                   decoration: BoxDecoration(
-                    color: const Color(0xffF3EFE8),
+                    color: Theme.of(context).colorScheme.surfaceContainerLow,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(

@@ -95,9 +95,12 @@ class _LoginState extends State<LoginPage> {
                     style: Theme.of(context).textTheme.headlineLarge,
                   ),
                   const SizedBox(height: 12),
-                  const Text(
+                  Text(
                     'Medidas, materiales y propuestas. Toda la visita en un solo lugar.',
-                    style: TextStyle(height: 1.6, color: Color(0xff6C6963)),
+                    style: TextStyle(
+                      height: 1.6,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                   const SizedBox(height: 28),
                   TextFormField(

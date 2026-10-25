@@ -9,9 +9,22 @@ class VisitRepository extends ChangeNotifier {
   List<Visit> visits = [];
   List<Map<String, dynamic>> materials = [];
   String? error;
-  String get _key => 'visits:${session.api.base}:${session.user?['email']}';
+  bool _initialized = false, _loading = false, _disposed = false;
+  @override
+  void notifyListeners() {
+    if (!_disposed) super.notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+
+  String get _key =>
+      'visits:${session.api.base}:${session.demo ? '__demo__' : session.user?['email']}';
   Future<void> saveLocal() async {
-    if (!session.demo) {
+    {
       await Api.storage.write(
         key: _key,
         value: jsonEncode(visits.map((v) => v.toJson()).toList()),
@@ -21,56 +34,70 @@ class VisitRepository extends ChangeNotifier {
   }
 
   Future<void> load() async {
-    final saved = session.demo ? null : await Api.storage.read(key: _key);
-    visits = saved == null
-        ? []
-        : (jsonDecode(saved) as List).map((v) => Visit.fromJson(v)).toList();
+    if (_loading) return;
+    _loading = true;
     try {
-      materials = (await session.api.call('/materials') as List)
-          .map((v) => Map<String, dynamic>.from(v))
-          .toList();
-      await Api.storage.write(
-        key: 'catalog:${session.api.base}',
-        value: jsonEncode(materials),
-      );
-      error = null;
-    } catch (e) {
-      final cached = await Api.storage.read(key: 'catalog:${session.api.base}');
-      materials = cached == null
-          ? []
-          : (jsonDecode(cached) as List).cast<Map<String, dynamic>>();
-      error = e.toString();
-    }
-    if (session.demo) {
-      final quartz = materials.where((m) => m['cat'] == 'Cuarzo').firstOrNull;
-      visits = [
-        Visit(
-          client: 'Cliente de demostración',
-          phone: '999000111',
-          location: 'Lima · visita de ejemplo',
-          materialId: quartz?['id'] ?? '',
-          material: quartz,
-          notes: 'Ejemplo local. No se envía al administrador.',
-        ),
-      ];
-    } else {
+      if (!_initialized) {
+        final saved = await Api.storage.read(key: _key);
+        visits = saved == null
+            ? []
+            : (jsonDecode(saved) as List)
+                  .map((v) => Visit.fromJson(v))
+                  .toList();
+        _initialized = true;
+      }
+
       try {
-        final remote = await session.api.call('/mobile/visits') as List;
-        for (final m in remote) {
-          final v = Visit.fromJson({...m, 'synced': true});
-          final i = visits.indexWhere((x) => x.id == v.id);
-          if (i < 0) {
-            visits.add(v);
-          } else if (visits[i].synced) {
-            v.photo = visits[i].photo;
-            visits[i] = v;
-          }
-        }
+        materials = (await session.api.call('/materials') as List)
+            .map((v) => Map<String, dynamic>.from(v))
+            .toList();
+        await Api.storage.write(
+          key: 'catalog:${session.api.base}',
+          value: jsonEncode(materials),
+        );
+        error = null;
       } catch (e) {
+        final cached = await Api.storage.read(
+          key: 'catalog:${session.api.base}',
+        );
+        materials = cached == null
+            ? []
+            : (jsonDecode(cached) as List).cast<Map<String, dynamic>>();
         error = e.toString();
       }
+      if (session.demo && visits.isEmpty) {
+        final quartz = materials.where((m) => m['cat'] == 'Cuarzo').firstOrNull;
+        visits = [
+          Visit(
+            client: 'Cliente de demostración',
+            phone: '999000111',
+            location: 'Lima · visita de ejemplo',
+            materialId: quartz?['id'] ?? '',
+            material: quartz,
+            notes: 'Ejemplo local. No se envía al administrador.',
+          ),
+        ];
+      } else if (!session.demo) {
+        try {
+          final remote = await session.api.call('/mobile/visits') as List;
+          for (final m in remote) {
+            final v = Visit.fromJson({...m, 'synced': true});
+            final i = visits.indexWhere((x) => x.id == v.id);
+            if (i < 0) {
+              visits.add(v);
+            } else if (visits[i].synced) {
+              v.photo = visits[i].photo;
+              visits[i] = v;
+            }
+          }
+        } catch (e) {
+          error = e.toString();
+        }
+      }
+      await saveLocal();
+    } finally {
+      _loading = false;
     }
-    await saveLocal();
   }
 
   Future<void> save(Visit v) async {
@@ -80,6 +107,14 @@ class VisitRepository extends ChangeNotifier {
     } else {
       visits[i] = v;
     }
+    await saveLocal();
+  }
+
+  Future<void> removeDraft(Visit visit) async {
+    if (visit.synced) {
+      throw Exception('Las visitas enviadas se gestionan desde la web.');
+    }
+    visits.removeWhere((v) => v.id == visit.id);
     await saveLocal();
   }
 

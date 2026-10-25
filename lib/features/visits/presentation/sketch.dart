@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../domain/visit.dart';
-import '../../../core/theme.dart';
 
 class Sketch extends StatelessWidget {
   final Visit visit;
@@ -23,7 +22,9 @@ class Sketch extends StatelessWidget {
               SizedBox(
                 height: 210,
                 width: double.infinity,
-                child: CustomPaint(painter: PiecePainter(p)),
+                child: CustomPaint(
+                  painter: PiecePainter(p, Theme.of(context).colorScheme),
+                ),
               ),
             ],
           ),
@@ -34,7 +35,8 @@ class Sketch extends StatelessWidget {
 
 class PiecePainter extends CustomPainter {
   final Piece p;
-  PiecePainter(this.p);
+  final ColorScheme scheme;
+  PiecePainter(this.p, this.scheme);
   @override
   void paint(Canvas c, Size size) {
     final scale = min(
@@ -43,9 +45,9 @@ class PiecePainter extends CustomPainter {
     );
     final w = p.length * scale, h = p.width * scale;
     final r = Rect.fromLTWH((size.width - w) / 2, (size.height - h) / 2, w, h);
-    final fill = Paint()..color = const Color(0xffF3EFE8);
+    final fill = Paint()..color = scheme.surfaceContainerHighest;
     final stroke = Paint()
-      ..color = carbon
+      ..color = scheme.onSurface
       ..strokeWidth = 1.4
       ..style = PaintingStyle.stroke;
     c.drawRect(r, fill);
@@ -54,8 +56,8 @@ class PiecePainter extends CustomPainter {
       final tp = TextPainter(
         text: TextSpan(
           text: text,
-          style: const TextStyle(
-            color: carbon,
+          style: TextStyle(
+            color: scheme.onSurface,
             fontFamily: 'DM Sans',
             fontSize: 13,
             fontWeight: FontWeight.w600,
@@ -67,7 +69,7 @@ class PiecePainter extends CustomPainter {
     }
 
     final dim = Paint()
-      ..color = gold
+      ..color = scheme.primary
       ..strokeWidth = 1;
     final y = r.bottom + 22;
     c.drawLine(Offset(r.left, y), Offset(r.right, y), dim);

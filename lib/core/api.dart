@@ -1,9 +1,18 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
+
+class ApiException implements Exception {
+  final String message;
+  final int status;
+  ApiException(this.message, this.status);
+  @override
+  String toString() => message;
+}
 
 class Api {
   static const storage = FlutterSecureStorage();
@@ -25,6 +34,10 @@ class Api {
         uri.userInfo.isNotEmpty) {
       throw Exception('Indica una URL http o https válida');
     }
+    if (uri.scheme == 'http' &&
+        !['localhost', '127.0.0.1', '::1', '10.0.2.2'].contains(uri.host)) {
+      throw Exception('Usa HTTPS para conectar fuera del enlace local USB.');
+    }
     base = value.trim().replaceAll(RegExp(r'/$'), '');
     cookie = null;
     await storage.delete(key: 'session');
@@ -45,19 +58,26 @@ class Api {
     if (data != null) request.body = jsonEncode(data);
     try {
       final response = await http.Response.fromStream(
-        await request.send().timeout(const Duration(seconds: 195)),
-      );
+        await request.send(),
+      ).timeout(Duration(seconds: path.endsWith("/image") ? 195 : 12));
       final body = response.body.isEmpty
           ? null
           : jsonDecode(utf8.decode(response.bodyBytes));
       if (response.statusCode >= 400) {
-        throw Exception(body?['error'] ?? 'No se pudo completar la operación');
+        throw ApiException(
+          body?['error'] ?? 'No se pudo completar la operación',
+          response.statusCode,
+        );
       }
       if (path == '/auth/login') {
         cookie = response.headers['set-cookie']?.split(';').first;
         await storage.write(key: 'session', value: cookie);
       }
       return body;
+    } on TimeoutException {
+      throw Exception(
+        'El servidor tarda en responder. Comprueba Docker y vuelve a intentar.',
+      );
     } on http.ClientException {
       throw Exception(
         'Sin conexión. Comprueba Docker y el enlace USB o la dirección del servidor.',
@@ -109,15 +129,37 @@ class Session extends ChangeNotifier {
   bool demo = false;
   bool get canEdit =>
       demo || ['admin', 'medicion', 'cotizacion'].contains(user?['role']);
+  String get profileKey => 'profile:${api.base}';
   Future<void> restore() async {
-    if (api.cookie != null) {
+    if (api.cookie == null) return;
+    final cached = await Api.storage.read(key: profileKey);
+    if (cached != null) {
       try {
-        user = Map<String, dynamic>.from(await api.call('/mobile/me'));
-      } catch (_) {
+        user = Map<String, dynamic>.from(jsonDecode(cached));
+      } catch (_) {}
+    }
+    try {
+      await verify().timeout(const Duration(seconds: 5));
+    } catch (_) {
+      /* Keep local drafts and cached identity while Docker is offline. Server still enforces every permission. */
+    }
+  }
+
+  Future<void> verify() async {
+    try {
+      user = Map<String, dynamic>.from(await api.call('/mobile/me'));
+      await Api.storage.write(key: profileKey, value: jsonEncode(user));
+    } on ApiException catch (e) {
+      if (e.status == 401) {
+        user = null;
         api.cookie = null;
         await Api.storage.delete(key: 'session');
+        await Api.storage.delete(key: profileKey);
+      } else {
+        rethrow;
       }
     }
+    notifyListeners();
   }
 
   Future<void> login(String email, String password) async {
@@ -129,6 +171,7 @@ class Session extends ChangeNotifier {
       ),
     );
     demo = false;
+    await Api.storage.write(key: profileKey, value: jsonEncode(user));
     notifyListeners();
   }
 
@@ -139,7 +182,13 @@ class Session extends ChangeNotifier {
   }
 
   Future<void> logout() async {
-    if (!demo) await api.logout();
+    try {
+      if (!demo) await api.logout();
+    } catch (_) {
+      api.cookie = null;
+      await Api.storage.delete(key: 'session');
+    }
+    if (!demo) await Api.storage.delete(key: profileKey);
     demo = false;
     user = null;
     notifyListeners();
