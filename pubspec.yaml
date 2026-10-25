@@ -1,0 +1,37 @@
+name: gm_campo
+description: G&M Melacampos — visitas técnicas y mediciones
+publish_to: none
+version: 1.0.0+1
+environment:
+  sdk: '>=3.9.0 <4.0.0'
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.5.0
+  http_parser: ^4.1.2
+  flutter_secure_storage: ^9.2.4
+  path_provider: ^2.1.5
+  image_picker: ^1.2.0
+  pdf: ^3.11.3
+  printing: ^5.14.2
+  uuid: ^4.5.1
+dev_dependencies:
+  integration_test:
+    sdk: flutter
+  flutter_driver:
+    sdk: flutter
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  image: 4.5.4
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/
+  fonts:
+    - family: DM Sans
+      fonts:
+        - asset: assets/DMSans.ttf
+    - family: Playfair Display
+      fonts:
+        - asset: assets/PlayfairDisplay.ttf
