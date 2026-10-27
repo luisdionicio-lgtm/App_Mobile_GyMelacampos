@@ -44,16 +44,23 @@ flutter build apk --debug
 
 El APK interno optimizado está en `build/app/outputs/flutter-apk/app-release.apk` (`flutter build apk --release`). Se firma con la clave de depuración para la prueba local. El modo debug también está disponible en `build/app/outputs/flutter-apk/app-debug.apk`. Una distribución comercial requiere firma propia y HTTPS.
 
-## iPhone
+## iPhone en esta Mac
 
-Se incluye el proyecto iOS y los permisos de cámara/galería. Compilar y firmar en un Mac con Xcode y la cuenta Apple correspondiente:
+El proyecto iOS usa Xcode, CocoaPods y Flutter 3.35.3. El iPhone físico debe estar enlazado con la Mac, tener el modo desarrollador activo y confiar en el perfil de desarrollo desde **Ajustes > General > VPN y gestión de dispositivos**. Xcode debe tener iniciada la cuenta Apple del equipo configurado en `ios/Runner.xcodeproj`.
+
+La app usa el mismo servidor Docker de la web. En la carpeta hermana `MELACAMPOS_WEB`, `LAN_BIND_IP` de `.env` debe ser la IP Wi-Fi actual de la Mac. Inicia los servicios con `docker compose up -d --wait`. El certificado público de esta instalación está incluido en `assets/lan-root-ca-mac.pem`; si se reemplaza el volumen de Caddy, exporta el nuevo certificado público antes de recompilar. No incluyas su clave privada.
 
 ```sh
-flutter pub get
-flutter build ios --no-codesign
+cd ~/Documents/Trabajo/MELACAMPOS_MOBIL
+~/Developer/flutter-3.35.3/flutter/bin/flutter pub get --enforce-lockfile
+~/Developer/flutter-3.35.3/flutter/bin/flutter devices
+PATH="$HOME/Developer/ruby-3.4.12/bin:$PATH" SSL_CERT_FILE=/etc/ssl/cert.pem \
+  ~/Developer/flutter-3.35.3/flutter/bin/flutter run --release \
+  -d ID_DEL_IPHONE \
+  --dart-define=API_BASE_URL=https://IP_WIFI_DE_LA_MAC:8443
 ```
 
-Configurar el servidor HTTPS accesible desde el iPhone. Esta entrega se valida en Android; no se afirma una compilación ni instalación iOS desde Windows.
+El ID se obtiene de `flutter devices` y la IP con `ipconfig getifaddr en0` en esta Mac. La instalación permanece en el iPhone después de cerrar Flutter; para utilizar la app, mantén Docker y el iPhone en la misma red. Si cambia la IP, también puedes actualizarla desde **Configurar conexión** en la pantalla de inicio de sesión. Con una cuenta Apple gratuita, iOS permite un número limitado de apps de desarrollo instaladas simultáneamente.
 
 ## Backend compartido y roles
 
