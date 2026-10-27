@@ -9,15 +9,20 @@ void main() {
   test(
     'local HTTPS trusts a public certificate without bypassing validation',
     () async {
-      final bytes = await rootBundle.load('assets/lan-root-ca.pem');
-      expect(
-        String.fromCharCodes(bytes.buffer.asUint8List()),
-        contains('BEGIN CERTIFICATE'),
-      );
-      expect(
-        String.fromCharCodes(bytes.buffer.asUint8List()),
-        isNot(contains('PRIVATE KEY')),
-      );
+      for (final asset in [
+        'assets/lan-root-ca.pem',
+        'assets/lan-root-ca-mac.pem',
+      ]) {
+        final bytes = await rootBundle.load(asset);
+        expect(
+          String.fromCharCodes(bytes.buffer.asUint8List()),
+          contains('BEGIN CERTIFICATE'),
+        );
+        expect(
+          String.fromCharCodes(bytes.buffer.asUint8List()),
+          isNot(contains('PRIVATE KEY')),
+        );
+      }
       await configureLocalTls();
       expect(SecurityContext.defaultContext, isA<SecurityContext>());
     },
