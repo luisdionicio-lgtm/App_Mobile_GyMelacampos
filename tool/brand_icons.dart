@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:image/image.dart' as img;
 
 void main() {
-  final source = img.decodePng(File('assets/app-icon.png').readAsBytesSync())!;
+  final source = img.decodePng(File('tool/app-icon-source.png').readAsBytesSync())!;
   final folder = Directory('ios/Runner/Assets.xcassets/AppIcon.appiconset');
   final contents = jsonDecode(
     File('${folder.path}/Contents.json').readAsStringSync(),

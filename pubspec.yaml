@@ -27,7 +27,16 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/
+    - assets/DMSans.ttf
+    - assets/DMSans-Bold.ttf
+    - assets/lan-root-ca.pem
+    - assets/lan-root-ca-mac.pem
+    - assets/login-black-marble-v2.jpg
+    - assets/login-navy-marble.jpg
+    - assets/login-white-marble-v2.jpg
+    - assets/quote-footer.png
+    - assets/quote-header.png
+    - assets/stone.png
   fonts:
     - family: DM Sans
       fonts:
