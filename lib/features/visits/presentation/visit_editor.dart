@@ -198,7 +198,7 @@ class _EditorState extends State<VisitEditor> {
     if (repo.session.demo) {
       showError(
         context,
-        'La demo genera bosquejos y proformas locales. Para generar una imagen IA ingresa con una cuenta de trabajador.',
+        'La demo genera propuestas locales con cotización y bosquejos. Para generar una imagen IA ingresa con una cuenta de trabajador.',
       );
       return;
     }
@@ -244,8 +244,7 @@ class _EditorState extends State<VisitEditor> {
   Widget build(BuildContext context) {
     final editable = repo.session.canEdit && !visit.synced;
     final role = repo.session.demo ? 'medicion' : repo.session.user?['role'];
-    final canSketch = role == 'medicion' || role == 'admin';
-    final canQuote = role == 'cotizacion' || role == 'admin';
+    final canPropose = canGenerateProposal(role?.toString() ?? '');
     return Scaffold(
       appBar: AppBar(
         title: Text(step == 0 ? 'Visita técnica' : 'Propuesta del proyecto'),
@@ -263,20 +262,14 @@ class _EditorState extends State<VisitEditor> {
             ),
         ],
       ),
-      bottomNavigationBar: step == 0 && (canSketch || canQuote)
+      bottomNavigationBar: step == 0 && canPropose
           ? SafeArea(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(22, 10, 22, 12),
                 child: FilledButton.icon(
                   onPressed: busy ? null : preview,
                   icon: const Icon(Icons.architecture),
-                  label: Text(
-                    role == 'medicion'
-                        ? 'Generar bosquejo'
-                        : role == 'cotizacion'
-                        ? 'Generar cotización'
-                        : 'Generar bosquejo y cotización',
-                  ),
+                  label: const Text('Generar propuesta completa'),
                 ),
               ),
             )
@@ -474,14 +467,14 @@ class _EditorState extends State<VisitEditor> {
                   '${visit.material?['cat']} · ${visit.material?['name']}',
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
-                if (canSketch) ...[
+                if (canPropose) ...[
                   heading('Bosquejo de mediciones'),
                   Sketch(visit),
                   const Note(
                     'Vista superior de piezas independientes. Revisa huecos, uniones y tolerancias antes de fabricar.',
                   ),
                 ],
-                if (canQuote)
+                if (canPropose)
                   Container(
                     padding: const EdgeInsets.all(22),
                     decoration: BoxDecoration(
@@ -526,7 +519,7 @@ class _EditorState extends State<VisitEditor> {
                   ),
                 const SizedBox(height: 16),
                 OutlinedButton.icon(
-                  onPressed: busy || (!canSketch && !canQuote)
+                  onPressed: busy || !canPropose
                       ? null
                       : () => run(() async {
                           await shareProforma(
@@ -537,13 +530,7 @@ class _EditorState extends State<VisitEditor> {
                           );
                         }),
                   icon: const Icon(Icons.picture_as_pdf_outlined),
-                  label: Text(
-                    role == 'medicion'
-                        ? 'Compartir bosquejo PDF'
-                        : role == 'cotizacion'
-                        ? 'Compartir cotización PDF'
-                        : 'Compartir propuesta PDF',
-                  ),
+                  label: const Text('Compartir propuesta completa PDF'),
                 ),
                 heading('Imagen referencial'),
                 if (imageUrl != null)

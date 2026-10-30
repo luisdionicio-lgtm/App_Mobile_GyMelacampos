@@ -40,10 +40,10 @@ void main() {
     expect(String.fromCharCodes(bytes.take(4)), '%PDF');
     expect(bytes.length, greaterThan(5000));
   });
-  test('document export follows the worker role', () {
-    expect(documentKindForRole('cotizacion'), ProformaKind.quotation);
-    expect(documentKindForRole('medicion'), ProformaKind.sketch);
-    expect(documentKindForRole('admin'), ProformaKind.complete);
-    expect(() => documentKindForRole('instalacion'), throwsStateError);
+  test('proposal export is available to field workers', () {
+    expect(canGenerateProposal('cotizacion'), isTrue);
+    expect(canGenerateProposal('medicion'), isTrue);
+    expect(canGenerateProposal('admin'), isTrue);
+    expect(canGenerateProposal('instalacion'), isFalse);
   });
 }

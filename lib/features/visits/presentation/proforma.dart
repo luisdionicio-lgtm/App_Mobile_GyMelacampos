@@ -6,14 +6,8 @@ import 'package:printing/printing.dart';
 import '../data/material_texture.dart';
 import '../domain/visit.dart';
 
-enum ProformaKind { quotation, sketch, complete }
-
-ProformaKind documentKindForRole(String role) => switch (role) {
-  'cotizacion' => ProformaKind.quotation,
-  'medicion' => ProformaKind.sketch,
-  'admin' => ProformaKind.complete,
-  _ => throw StateError('Este rol no puede generar documentos.'),
-};
+bool canGenerateProposal(String role) =>
+    ['admin', 'medicion', 'cotizacion'].contains(role);
 
 const navy = PdfColor.fromInt(0xff092744);
 const ink = PdfColor.fromInt(0xff0c1d35);
@@ -24,7 +18,6 @@ const grid = PdfColor.fromInt(0xffc9d0d7);
 Future<Uint8List> buildProforma(
   Visit visit, {
   bool demo = false,
-  ProformaKind kind = ProformaKind.complete,
   Uint8List? textureBytes,
 }) async {
   final font = pw.Font.ttf(await rootBundle.load('assets/DMSans.ttf'));
@@ -41,15 +34,11 @@ Future<Uint8List> buildProforma(
   );
   final quoteSets = <List<Piece>>[];
   final sketchSets = <List<Piece>>[];
-  if (kind != ProformaKind.sketch) {
-    for (var i = 0; i < visit.pieces.length; i += 4) {
-      quoteSets.add(visit.pieces.skip(i).take(4).toList());
-    }
+  for (var i = 0; i < visit.pieces.length; i += 4) {
+    quoteSets.add(visit.pieces.skip(i).take(4).toList());
   }
-  if (kind != ProformaKind.quotation) {
-    for (var i = 0; i < visit.pieces.length; i += 2) {
-      sketchSets.add(visit.pieces.skip(i).take(2).toList());
-    }
+  for (var i = 0; i < visit.pieces.length; i += 2) {
+    sketchSets.add(visit.pieces.skip(i).take(2).toList());
   }
   final count = quoteSets.length + sketchSets.length;
   var page = 0;
@@ -72,24 +61,14 @@ Future<void> shareProforma(
   required String serverBase,
   bool demo = false,
 }) async {
-  final kind = documentKindForRole(role);
-  final texture = kind == ProformaKind.quotation
-      ? null
-      : await loadMaterialTexture(visit, serverBase);
-  final bytes = await buildProforma(
-    visit,
-    kind: kind,
-    demo: demo,
-    textureBytes: texture,
-  );
-  final name = switch (kind) {
-    ProformaKind.quotation => 'Cotizacion',
-    ProformaKind.sketch => 'Bosquejo',
-    ProformaKind.complete => 'Propuesta',
-  };
+  if (!canGenerateProposal(role)) {
+    throw StateError('Este rol no puede generar documentos.');
+  }
+  final texture = await loadMaterialTexture(visit, serverBase);
+  final bytes = await buildProforma(visit, demo: demo, textureBytes: texture);
   await Printing.sharePdf(
     bytes: bytes,
-    filename: '$name-GM-${visit.id.substring(0, 8)}.pdf',
+    filename: 'Propuesta-GM-${visit.id.substring(0, 8)}.pdf',
   );
 }
 

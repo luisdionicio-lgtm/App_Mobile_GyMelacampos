@@ -65,7 +65,7 @@ class SettingsPage extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Rol: ${{'admin': 'Administrador', 'medicion': 'Medición', 'cotizacion': 'Cotización', 'instalacion': 'Instalación'}[session.user?['role']] ?? 'Trabajador'}',
+          'Rol: ${{'admin': 'Administrador', 'medicion': 'Medición y cotización', 'cotizacion': 'Medición y cotización', 'instalacion': 'Instalación'}[session.user?['role']] ?? 'Trabajador'}',
           style: TextStyle(color: scheme.onSurfaceVariant),
         ),
         const Divider(height: 36),

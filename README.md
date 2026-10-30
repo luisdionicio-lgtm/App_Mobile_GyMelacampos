@@ -15,11 +15,11 @@ Aplicación Flutter para visitas técnicas de G&M Melacampos, conectada al mismo
 
 ## Flujo
 
-1. El administrador crea una cuenta en `http://localhost:8080/admin/equipo-movil` y asigna Medición, Cotización o Instalación.
+1. El administrador crea una cuenta en `http://localhost:8080/admin/equipo-movil` y asigna Medición y cotización o Instalación. Las cuentas anteriores de Cotización conservan acceso a ambas funciones.
 2. El trabajador ingresa con esa cuenta. El botón Demo abre un entorno local claramente identificado; no crea registros reales.
 3. Registra cliente, teléfono, dirección y ambiente (baño, cocina u otro).
 4. Ingresa piezas rectangulares: largo y ancho en **metros**, espesor en **centímetros** y cantidad. No mide con cámara, por aclaración del propietario.
-5. Elige un material del catálogo real y la unidad de cotización. Genera bosquejo con cotas, proforma y PDF compartible.
+5. Elige un material del catálogo real y la unidad de cotización. Genera una propuesta PDF única con cotización y bosquejos acotados; el fondo de las piezas usa la imagen del material seleccionado.
 6. Envía la visita para revisión web; se registra también la solicitud en Cotizaciones y el cliente prospecto usando el flujo idempotente existente. Puede adjuntar una fotografía. El administrador valida u observa y puede asignarla a otro trabajador.
 7. Genera opcionalmente una imagen conceptual con IA. Se usa la clave de OpenAI del backend; nunca se incorpora en el APK ni en Git.
 
@@ -67,7 +67,7 @@ El ID se obtiene de `flutter devices` y la IP con `ipconfig getifaddr en0` en es
 No se crea otra base de datos ni otro Docker. `integration/web/` contiene las fuentes que amplían el proyecto web; consultar `integration/README.md`. Los volúmenes existentes se mantienen. Las cuentas administrativas anteriores conservan su rol; las cuentas nuevas solo pueden ser creadas por un administrador. No hay registro público.
 
 - **Administrador:** gestiona trabajadores, edición de nombres, roles, bloqueo, restablecimiento de contraseña y revisión/asignación de visitas. El correo permanece como identificador fijo de acceso.
-- **Medición y Cotización:** registran sus propias visitas, calculan propuestas y solicitan imágenes.
+- **Medición y cotización:** una cuenta registra sus propias visitas, calcula propuestas y solicita imágenes. Genera un PDF completo con cotización y bosquejos, para conservar juntos los datos del cliente, las medidas y el importe preliminar. Las cuentas anteriores con rol Cotización mantienen estas mismas funciones.
 - **Instalación:** consulta visitas propias o asignadas; no crea propuestas ni genera imágenes.
 - Los permisos se comprueban en cada petición contra la base de datos. Bloquear un usuario o restablecer su contraseña invalida sus sesiones anteriores. Reactivar la cuenta exige iniciar sesión de nuevo; las sesiones antiguas no recuperan acceso.
 
