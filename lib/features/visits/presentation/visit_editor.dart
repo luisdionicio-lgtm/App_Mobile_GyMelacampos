@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import '../../../core/theme.dart';
 import '../domain/visit.dart';
 import '../data/visit_repository.dart';
+import '../data/material_texture.dart';
 import 'sketch.dart';
 import 'proforma.dart';
 
@@ -242,6 +243,9 @@ class _EditorState extends State<VisitEditor> {
   @override
   Widget build(BuildContext context) {
     final editable = repo.session.canEdit && !visit.synced;
+    final role = repo.session.demo ? 'medicion' : repo.session.user?['role'];
+    final canSketch = role == 'medicion' || role == 'admin';
+    final canQuote = role == 'cotizacion' || role == 'admin';
     return Scaffold(
       appBar: AppBar(
         title: Text(step == 0 ? 'Visita técnica' : 'Propuesta del proyecto'),
@@ -259,14 +263,20 @@ class _EditorState extends State<VisitEditor> {
             ),
         ],
       ),
-      bottomNavigationBar: step == 0
+      bottomNavigationBar: step == 0 && (canSketch || canQuote)
           ? SafeArea(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(22, 10, 22, 12),
                 child: FilledButton.icon(
                   onPressed: busy ? null : preview,
                   icon: const Icon(Icons.architecture),
-                  label: const Text('Generar bosquejo y proforma'),
+                  label: Text(
+                    role == 'medicion'
+                        ? 'Generar bosquejo'
+                        : role == 'cotizacion'
+                        ? 'Generar cotización'
+                        : 'Generar bosquejo y cotización',
+                  ),
                 ),
               ),
             )
@@ -360,12 +370,17 @@ class _EditorState extends State<VisitEditor> {
                       )
                       .toList(),
                   onChanged: editable
-                      ? (value) => setState(() {
-                          visit.materialId = value!;
-                          visit.material = repo.materials.firstWhere(
-                            (m) => m['id'] == value,
+                      ? (value) {
+                          setState(() {
+                            visit.materialId = value!;
+                            visit.material = repo.materials.firstWhere(
+                              (m) => m['id'] == value,
+                            );
+                          });
+                          unawaited(
+                            loadMaterialTexture(visit, repo.session.api.base),
                           );
-                        })
+                        }
                       : null,
                 ),
                 if (visit.material != null) ...[
@@ -459,61 +474,76 @@ class _EditorState extends State<VisitEditor> {
                   '${visit.material?['cat']} · ${visit.material?['name']}',
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
-                heading('Bosquejo de mediciones'),
-                Sketch(visit),
-                const Note(
-                  'Vista superior de piezas independientes. Revisa huecos, uniones y tolerancias antes de fabricar.',
-                ),
-                Container(
-                  padding: const EdgeInsets.all(22),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerLow,
-                    borderRadius: BorderRadius.circular(12),
+                if (canSketch) ...[
+                  heading('Bosquejo de mediciones'),
+                  Sketch(visit),
+                  const Note(
+                    'Vista superior de piezas independientes. Revisa huecos, uniones y tolerancias antes de fabricar.',
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Proforma preliminar',
-                        style: TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        visit.preview?['preliminary'] == null
-                            ? 'Por evaluar'
-                            : 'S/ ${(visit.preview!['preliminary']['amount'] as num).toStringAsFixed(2)}',
-                        style: Theme.of(context).textTheme.headlineLarge,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '${visit.area.toStringAsFixed(3)} m² · ${visit.linear.toStringAsFixed(2)} ML',
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        visit.preview?['preliminary'] == null
-                            ? 'El administrador debe configurar o confirmar la tarifa.'
-                            : '${visit.preview!['preliminary']['quantity']} ${visit.unit} × S/ ${visit.preview!['preliminary']['rate']}',
-                      ),
-                      if (visit.preview?['preliminary']?['assemblyIncluded'] ==
-                          true)
-                        const Text('Incluye armado e instalación.'),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Sujeta a revisión administrativa.',
-                        style: TextStyle(fontSize: 12),
-                      ),
-                    ],
+                ],
+                if (canQuote)
+                  Container(
+                    padding: const EdgeInsets.all(22),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Proforma preliminar',
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          visit.preview?['preliminary'] == null
+                              ? 'Por evaluar'
+                              : 'S/ ${(visit.preview!['preliminary']['amount'] as num).toStringAsFixed(2)}',
+                          style: Theme.of(context).textTheme.headlineLarge,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '${visit.area.toStringAsFixed(3)} m² · ${visit.linear.toStringAsFixed(2)} ML',
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          visit.preview?['preliminary'] == null
+                              ? 'El administrador debe configurar o confirmar la tarifa.'
+                              : '${visit.preview!['preliminary']['quantity']} ${visit.unit} × S/ ${visit.preview!['preliminary']['rate']}',
+                        ),
+                        if (visit
+                                .preview?['preliminary']?['assemblyIncluded'] ==
+                            true)
+                          const Text('Incluye armado e instalación.'),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Sujeta a revisión administrativa.',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
                 const SizedBox(height: 16),
                 OutlinedButton.icon(
-                  onPressed: busy
+                  onPressed: busy || (!canSketch && !canQuote)
                       ? null
                       : () => run(() async {
-                          await shareProforma(visit, demo: repo.session.demo);
+                          await shareProforma(
+                            visit,
+                            role: role?.toString() ?? '',
+                            serverBase: repo.session.api.base,
+                            demo: repo.session.demo,
+                          );
                         }),
                   icon: const Icon(Icons.picture_as_pdf_outlined),
-                  label: const Text('Compartir proforma PDF'),
+                  label: Text(
+                    role == 'medicion'
+                        ? 'Compartir bosquejo PDF'
+                        : role == 'cotizacion'
+                        ? 'Compartir cotización PDF'
+                        : 'Compartir propuesta PDF',
+                  ),
                 ),
                 heading('Imagen referencial'),
                 if (imageUrl != null)
