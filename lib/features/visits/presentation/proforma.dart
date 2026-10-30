@@ -449,9 +449,35 @@ class _Layout {
       color: navy,
     );
     block(30, 237, 61, 2, red);
-    block(91, 237, 355, 2, grid);
+    block(91, 237, 247, 2, grid);
+    block(363, 170, 204, 85, pale);
+    block(363, 170, 204, 19, navy);
+    block(363, 170, 7, 19, red);
+    label(
+      375,
+      174,
+      180,
+      13,
+      'DATOS DEL CLIENTE',
+      9,
+      bold: true,
+      color: PdfColors.white,
+    );
+    final clientRows = [
+      ('Cliente', v.client),
+      ('Teléfono', v.phone),
+      ('Ubicación', v.location),
+      ('Proyecto', v.project),
+      ('Material', v.material?['name']?.toString() ?? 'Por confirmar'),
+    ];
+    for (var i = 0; i < clientRows.length; i++) {
+      final row = clientRows[i];
+      final rowY = 194.0 + 12 * i;
+      label(373, rowY, 51, 11, row.$1, 7.2, bold: true);
+      label(425, rowY, 135, 11, row.$2, row.$2.length > 27 ? 6.5 : 7.5);
+    }
     for (var i = 0; i < pieces.length; i++) {
-      final p = pieces[i], top = 251.0 + 190 * i;
+      final p = pieces[i], top = 266.0 + 190 * i;
       block(30, top, 25, 25, red);
       label(
         30,
