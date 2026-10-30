@@ -73,7 +73,7 @@ class _LoginState extends State<LoginPage> {
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
     final topInset = MediaQuery.paddingOf(context).top;
-    final heroHeight = (size.height * .43).clamp(360.0, 400.0);
+    final heroHeight = (size.height * .375).clamp(315.0, 360.0);
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
       child: Scaffold(
@@ -256,12 +256,14 @@ class _LoginHero extends StatelessWidget {
     width: double.infinity,
     child: Stack(
       children: [
-        const Positioned.fill(child: ColoredBox(color: _navy)),
         Positioned.fill(
-          child: Opacity(
-            opacity: .19,
+          child: Image.asset('assets/login-navy-marble.jpg', fit: BoxFit.cover),
+        ),
+        Positioned.fill(
+          child: ClipPath(
+            clipper: const _BlackMarbleFacet(),
             child: Image.asset(
-              'assets/login-black-marble.png',
+              'assets/login-black-marble-v2.jpg',
               fit: BoxFit.cover,
             ),
           ),
@@ -270,7 +272,7 @@ class _LoginHero extends StatelessWidget {
           child: ClipPath(
             clipper: const _MarbleWedge(),
             child: Image.asset(
-              'assets/login-white-marble.png',
+              'assets/login-white-marble-v2.jpg',
               fit: BoxFit.cover,
             ),
           ),
@@ -282,7 +284,7 @@ class _LoginHero extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: EdgeInsets.fromLTRB(24, topInset + 22, 24, 28),
+          padding: EdgeInsets.fromLTRB(24, topInset + 4, 24, 18),
           child: LayoutBuilder(
             builder: (context, limits) => FittedBox(
               fit: BoxFit.scaleDown,
@@ -294,9 +296,9 @@ class _LoginHero extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const _LoginBrand(),
-                    const SizedBox(height: 30),
-                    Container(width: 44, height: 3, color: _red),
                     const SizedBox(height: 12),
+                    Container(width: 44, height: 3, color: _red),
+                    const SizedBox(height: 18),
                     Text.rich(
                       TextSpan(
                         children: [
@@ -391,9 +393,9 @@ class _MarbleWedge extends CustomClipper<Path> {
   const _MarbleWedge();
   @override
   Path getClip(Size size) => Path()
-    ..moveTo(size.width, 68)
-    ..lineTo(size.width, size.height)
-    ..lineTo(size.width * .56, size.height)
+    ..moveTo(size.width, size.height * .18)
+    ..lineTo(size.width, size.height * .98)
+    ..lineTo(size.width * .66, size.height * .50)
     ..close();
   @override
   bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
@@ -403,10 +405,23 @@ class _RedSlash extends CustomClipper<Path> {
   const _RedSlash();
   @override
   Path getClip(Size size) => Path()
-    ..moveTo(size.width, 48)
-    ..lineTo(size.width, 70)
-    ..lineTo(size.width * .56, size.height)
-    ..lineTo(size.width * .49, size.height)
+    ..moveTo(size.width, size.height * .10)
+    ..lineTo(size.width, size.height * .18)
+    ..lineTo(size.width * .66, size.height * .50)
+    ..lineTo(size.width * .62, size.height * .45)
+    ..close();
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+}
+
+class _BlackMarbleFacet extends CustomClipper<Path> {
+  const _BlackMarbleFacet();
+  @override
+  Path getClip(Size size) => Path()
+    ..moveTo(size.width * .66, size.height * .50)
+    ..lineTo(size.width, size.height * .98)
+    ..lineTo(size.width, size.height)
+    ..lineTo(size.width * .40, size.height)
     ..close();
   @override
   bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
