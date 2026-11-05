@@ -144,7 +144,7 @@ class SettingsPage extends StatelessWidget {
                   ? 'Servidor disponible'
                   : 'Servidor sin conexión',
             ),
-            subtitle: Text(session.api.base),
+            subtitle: Text(session.api.endpoint),
             trailing: IconButton(
               tooltip: 'Comprobar conexión',
               onPressed: monitor.check,

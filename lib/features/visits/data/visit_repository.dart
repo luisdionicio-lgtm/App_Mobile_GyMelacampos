@@ -22,7 +22,7 @@ class VisitRepository extends ChangeNotifier {
   }
 
   String get _key =>
-      'visits:${session.api.base}:${session.demo ? '__demo__' : session.user?['email']}';
+      'visits:${session.api.storageBase}:${session.demo ? '__demo__' : session.user?['email']}';
   Future<void> saveLocal() async {
     {
       await Api.storage.write(
@@ -52,13 +52,13 @@ class VisitRepository extends ChangeNotifier {
             .map((v) => Map<String, dynamic>.from(v))
             .toList();
         await Api.storage.write(
-          key: 'catalog:${session.api.base}',
+          key: 'catalog:${session.api.storageBase}',
           value: jsonEncode(materials),
         );
         error = null;
       } catch (e) {
         final cached = await Api.storage.read(
-          key: 'catalog:${session.api.base}',
+          key: 'catalog:${session.api.storageBase}',
         );
         materials = cached == null
             ? []

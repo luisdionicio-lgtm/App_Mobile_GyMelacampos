@@ -39,7 +39,7 @@ class _EditorState extends State<VisitEditor> {
     notes = TextEditingController(text: visit.notes);
     if (visit.imageFile != null) {
       imageUrl =
-          '${repo.session.api.base}/api/mobile/visits/${visit.id}/files/${visit.imageFile}';
+          '${repo.session.api.endpoint}/api/mobile/visits/${visit.id}/files/${visit.imageFile}';
     }
   }
 
@@ -211,7 +211,7 @@ class _EditorState extends State<VisitEditor> {
       );
       visit.imageFile = result['fileId'];
       imageUrl =
-          '${repo.session.api.base}/api/mobile/visits/${visit.id}/files/${visit.imageFile}';
+          '${repo.session.api.endpoint}/api/mobile/visits/${visit.id}/files/${visit.imageFile}';
       await repo.save(visit);
     });
   }
@@ -373,7 +373,7 @@ class _EditorState extends State<VisitEditor> {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: Image.network(
-                      '${repo.session.api.base}${visit.material!['img']}',
+                      '${repo.session.api.endpoint}${visit.material!['img']}',
                       height: 140,
                       fit: BoxFit.cover,
                       errorBuilder: (_, e, s) => const SizedBox(

@@ -128,3 +128,22 @@ Para volver al modo USB se puede configurar `http://127.0.0.1:8080` y ejecutar e
 En una cuenta de trabajador, **Guardar en admin** envía el formulario válido, medidas, piezas, material y cotización al backend compartido. La visita queda visible en «Equipo móvil» y la solicitud vinculada aparece en «Cotizaciones». El detalle administrativo muestra el vínculo entre ambos registros. «Enviar visita al administrador» desde la proforma conserva el mismo flujo.
 
 El guardado automático es un borrador local: permite continuar sin conexión o con campos incompletos. Si falla la red al enviar, el borrador permanece en el teléfono para reintentar; no se indica como enviado. La demo guarda únicamente datos locales.
+
+
+## Dos redes guardadas: casa y Motorola (Android 1.3)
+
+La app prueba por HTTPS las dos direcciones de esta instalación y utiliza la disponible:
+
+- Casa, DIONICIO-2.4G-GQUD: `https://192.168.18.103:8443`.
+- Datos compartidos del Motorola, motoedge50fusion_9340: `https://10.149.160.129:8444`.
+
+Ambas rutas llegan al mismo backend, PostgreSQL y administración. No es necesario cambiar la URL al pasar de una red a otra con el APK 1.3. Los borradores usan una identidad común; al actualizar se combinan por UUID los borradores de las direcciones anteriores, conservando el borrador existente de casa si hay duplicados. Los originales se conservan. Un servidor HTTPS personalizado no participa en este cambio automático ni comparte su sesión con estas rutas.
+
+Docker mantiene dos entradas Caddy, con certificados de la misma autoridad local y puertos separados. En esta instalación `LAN_LISTEN_IP=0.0.0.0` permite conservar los puertos al cambiar de Wi-Fi; Windows debe limitar el acceso con la regla del proyecto a Wi-Fi, las dos IP locales y los puertos 8443/8444. No abrir puertos en el router. En copias nuevas el enlace predeterminado sigue limitado a localhost. Para habilitar la regla, ejecutar en PowerShell como administrador:
+
+```powershell
+cd D:\GyMelacampos
+.\scripts\permitir-wifi.ps1 -ServerIP 10.149.160.129
+```
+
+Si el equipo está conectado a casa, usar `-ServerIP 192.168.18.103`. Este parámetro verifica que la interfaz esté conectada antes de configurar la regla. Después, `docker compose up -d` conserva ambas entradas sin reconfiguración por cambio de red. Las IP deben seguir siendo las indicadas; si DHCP las cambia, se deben actualizar las direcciones, la regla y el APK. No hay descubrimiento automático de IP ni acceso remoto por internet. El teléfono debe poder alcanzar la PC por la red elegida, y la PC y Docker deben permanecer encendidos. No requiere USB ni modo desarrollador.
