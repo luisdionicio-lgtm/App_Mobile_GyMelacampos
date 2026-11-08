@@ -15,12 +15,54 @@ class ApiException implements Exception {
 }
 
 class Api {
+  Api({this.networkProbe});
+  final Future<bool> Function(String)? networkProbe;
   static const storage = FlutterSecureStorage();
   static const defaultBase = String.fromEnvironment(
     'API_BASE_URL',
     defaultValue: 'http://127.0.0.1:8080',
   );
   String base = defaultBase;
+  static const networkBases = [
+    'https://192.168.18.103:8443',
+    'https://10.149.160.129:8444',
+    'https://10.149.160.129:8443',
+  ];
+  String? _route;
+  String get storageBase =>
+      networkBases.contains(base) ? networkBases.first : base;
+  String get endpoint => _route ?? base;
+  Future<bool>? _selection;
+  Future<bool> selectNetwork() =>
+      _selection ??= _selectNetwork().whenComplete(() => _selection = null);
+  Future<bool> _selectNetwork() async {
+    final candidates = networkBases.contains(base)
+        ? {if (_route != null) _route!, ...networkBases.take(2)}
+        : {base};
+    final results = await Future.wait(
+      candidates.map((candidate) async {
+        try {
+          if (networkProbe != null) {
+            return await networkProbe!(candidate) ? candidate : null;
+          }
+          final response = await http
+              .get(Uri.parse('$candidate/api/health'))
+              .timeout(const Duration(seconds: 2));
+          return response.statusCode == 200 ? candidate : null;
+        } catch (_) {
+          return null;
+        }
+      }),
+    );
+    for (final result in results) {
+      if (result != null) {
+        _route = result;
+        return true;
+      }
+    }
+    return false;
+  }
+
   String? cookie;
   static bool isUsbBridge(String value) {
     final uri = Uri.tryParse(value);
@@ -56,6 +98,40 @@ class Api {
       base = defaultBase;
       await storage.write(key: 'server', value: base);
     }
+    if (networkBases.contains(base)) {
+      final records = await storage.readAll();
+      for (final alias in networkBases.skip(1)) {
+        final marker = 'network-migrated:$alias';
+        if (records[marker] == '1') continue;
+        for (final prefix in ['catalog', 'profile']) {
+          final target = '$prefix:$storageBase';
+          if (await storage.read(key: target) == null &&
+              records['$prefix:$alias'] != null) {
+            await storage.write(key: target, value: records['$prefix:$alias']);
+          }
+        }
+        for (final entry in records.entries) {
+          if (!entry.key.startsWith('visits:$alias:')) continue;
+          final target =
+              'visits:$storageBase${entry.key.substring(('visits:$alias').length)}';
+          final existing = await storage.read(key: target);
+          final merged = <String, dynamic>{};
+          for (final item in jsonDecode(entry.value) as List) {
+            merged[item['id'] as String] = item;
+          }
+          if (existing != null) {
+            for (final item in jsonDecode(existing) as List) {
+              merged[item['id'] as String] = item;
+            }
+          }
+          await storage.write(
+            key: target,
+            value: jsonEncode(merged.values.toList()),
+          );
+        }
+        await storage.write(key: marker, value: '1');
+      }
+    }
     cookie = await storage.read(key: 'session');
   }
 
@@ -72,6 +148,7 @@ class Api {
       throw Exception('Usa HTTPS para conectar fuera del enlace local USB.');
     }
     base = value.trim().replaceAll(RegExp(r'/$'), '');
+    _route = null;
     cookie = null;
     await storage.delete(key: 'session');
     await storage.write(key: 'server', value: base);
@@ -86,7 +163,8 @@ class Api {
     String method = 'GET',
     Object? data,
   }) async {
-    final request = http.Request(method, Uri.parse('$base/api$path'))
+    await selectNetwork();
+    final request = http.Request(method, Uri.parse('$endpoint/api$path'))
       ..headers.addAll(headers);
     if (data != null) request.body = jsonEncode(data);
     try {
@@ -119,9 +197,10 @@ class Api {
   }
 
   Future<void> photo(String id, String file) async {
+    await selectNetwork();
     final request = http.MultipartRequest(
       'POST',
-      Uri.parse('$base/api/mobile/visits/$id/photo'),
+      Uri.parse('$endpoint/api/mobile/visits/$id/photo'),
     );
     if (cookie != null) request.headers['Cookie'] = cookie!;
     final content = await File(file).readAsBytes();
@@ -162,7 +241,7 @@ class Session extends ChangeNotifier {
   bool demo = false;
   bool get canEdit =>
       demo || ['admin', 'medicion', 'cotizacion'].contains(user?['role']);
-  String get profileKey => 'profile:${api.base}';
+  String get profileKey => 'profile:${api.storageBase}';
   Future<void> restore() async {
     if (api.cookie == null) return;
     final cached = await Api.storage.read(key: profileKey);

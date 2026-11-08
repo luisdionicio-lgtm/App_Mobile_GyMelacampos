@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/widgets.dart';
-import 'package:http/http.dart' as http;
 import 'api.dart';
 
 enum ServerState { checking, online, offline }
@@ -25,10 +24,7 @@ class ConnectionMonitor extends ChangeNotifier with WidgetsBindingObserver {
     if (_checking || _disposed) return;
     _checking = true;
     try {
-      final result = await http
-          .get(Uri.parse('${api.base}/api/health'))
-          .timeout(const Duration(seconds: 4));
-      state = result.statusCode == 200
+      state = await api.selectNetwork()
           ? ServerState.online
           : ServerState.offline;
     } catch (_) {

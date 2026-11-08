@@ -33,7 +33,7 @@ void main() {
       await api.init();
       final prefs = AppPreferences();
       await prefs.load();
-      final demoKey = 'visits:${api.base}:__demo__';
+      final demoKey = 'visits:${api.storageBase}:__demo__';
       final oldDrafts = await Api.storage.read(key: demoKey),
           oldPreferences = await Api.storage.read(key: AppPreferences.key);
       try {

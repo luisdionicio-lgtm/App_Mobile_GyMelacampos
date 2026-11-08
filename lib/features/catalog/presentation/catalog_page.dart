@@ -101,7 +101,7 @@ class _CatalogState extends State<CatalogPage> {
                 Hero(
                   tag: 'material-${material['id']}',
                   child: Image.network(
-                    '${widget.repo.session.api.base}${material['img']}',
+                    '${widget.repo.session.api.endpoint}${material['img']}',
                     height: 135,
                     width: double.infinity,
                     fit: BoxFit.cover,
@@ -253,7 +253,7 @@ class MaterialPage extends StatelessWidget {
             child: Hero(
               tag: 'material-${material['id']}',
               child: Image.network(
-                '${repo.session.api.base}${material['img']}',
+                '${repo.session.api.endpoint}${material['img']}',
                 height: 280,
                 fit: BoxFit.cover,
                 errorBuilder: (_, e, s) => const SizedBox(
