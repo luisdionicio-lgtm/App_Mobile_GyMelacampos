@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/brand_ui.dart';
 import '../../../core/preferences.dart';
 import '../../../core/theme.dart';
 import '../../visits/data/visit_repository.dart';
@@ -13,7 +14,7 @@ class CatalogPage extends StatefulWidget {
 }
 
 class _CatalogState extends State<CatalogPage> {
-  String search = '', category = 'Todos';
+  String search = '', category = 'Mármol';
   bool favoritesOnly = false;
   final searchController = TextEditingController();
   @override
@@ -27,18 +28,16 @@ class _CatalogState extends State<CatalogPage> {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'La piedra indicada.',
-          style: Theme.of(context).textTheme.headlineLarge,
+        const GmPageTitle(
+          'Nuestro catálogo',
+          subtitle: 'Explora los materiales disponibles en G&M.',
         ),
-        const SizedBox(height: 10),
-        const Text('Texturas y materiales del catálogo de G&M.'),
         const SizedBox(height: 20),
         TextField(
           controller: searchController,
           onChanged: (v) => setState(() => search = v),
           decoration: const InputDecoration(
-            labelText: 'Buscar material',
+            hintText: 'Buscar material por nombre o veta',
             prefixIcon: Icon(Icons.search),
           ),
         ),
@@ -58,10 +57,9 @@ class _CatalogState extends State<CatalogPage> {
               ),
               const SizedBox(width: 8),
               for (final value in [
-                'Todos',
-                'Cuarzo',
-                'Granito',
                 'Mármol',
+                'Granito',
+                'Cuarzo',
                 'Sinterizada',
               ])
                 Padding(
@@ -82,7 +80,7 @@ class _CatalogState extends State<CatalogPage> {
   Widget tile(Map<String, dynamic> material, AppPreferences prefs) {
     final scheme = Theme.of(context).colorScheme;
     return Material(
-      color: scheme.surfaceContainerLow,
+      color: scheme.surfaceContainerLowest,
       borderRadius: BorderRadius.circular(14),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -202,7 +200,7 @@ class _CatalogState extends State<CatalogPage> {
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: constraints.crossAxisExtent >= 700 ? 3 : 2,
                 mainAxisExtent:
-                    MediaQuery.textScalerOf(context).scale(90) + 145,
+                    MediaQuery.textScalerOf(context).scale(82) + 145,
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 18,
               ),
@@ -290,7 +288,7 @@ class MaterialPage extends StatelessWidget {
             ),
           const Divider(height: 32),
           Text(
-            (material['pricePerM2'] as num) > 0
+            ((material['pricePerM2'] as num?)?.toDouble() ?? 0) > 0
                 ? 'S/ ${material['pricePerM2']} por m²'
                 : 'Tarifa por evaluar',
             style: Theme.of(context).textTheme.titleLarge,
@@ -299,13 +297,13 @@ class MaterialPage extends StatelessWidget {
             'La cotización utiliza las tarifas configuradas en la web. El precio final requiere revisión administrativa.',
           ),
           if (repo.session.canEdit)
-            FilledButton.icon(
+            GmAction(
               onPressed: () {
                 Navigator.pop(context);
                 onUse(Visit(materialId: material['id'], material: material));
               },
-              icon: const Icon(Icons.add),
-              label: const Text('Usar en nueva visita'),
+              icon: Icons.check_circle_outline,
+              label: 'Seleccionar para una visita',
             ),
         ],
       ),

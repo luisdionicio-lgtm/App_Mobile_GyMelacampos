@@ -11,6 +11,7 @@ import '../../visits/data/visit_repository.dart';
 import '../../visits/domain/visit.dart';
 import '../../visits/presentation/visit_editor.dart';
 import '../../visits/presentation/visits_page.dart';
+import '../../visits/presentation/tracking_page.dart';
 import 'home_page.dart';
 import 'widgets.dart';
 
@@ -63,6 +64,11 @@ class _WorkspaceState extends State<Workspace> {
     );
     if (mounted) setState(() {});
   }
+
+  void openTracking() => Navigator.push(
+    context,
+    MaterialPageRoute(builder: (_) => TrackingPage(repo)),
+  );
 
   void select(int index) {
     if (index == tab) return;
@@ -139,6 +145,7 @@ class _WorkspaceState extends State<Workspace> {
                     onOpen: open,
                     onVisits: () => select(1),
                     onMaterials: () => select(2),
+                    onTracking: openTracking,
                   ),
                   KeepAlivePage(
                     child: VisitsPage(repo: repo, onOpen: open),

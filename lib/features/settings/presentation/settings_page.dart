@@ -1,202 +1,221 @@
 import 'package:flutter/material.dart';
 import '../../../core/api.dart';
+import '../../../core/brand_ui.dart';
 import '../../../core/connection.dart';
 import '../../../core/preferences.dart';
-import '../../../core/theme.dart';
 
 class SettingsPage extends StatelessWidget {
   final Session session;
   final ConnectionMonitor monitor;
   const SettingsPage({super.key, required this.session, required this.monitor});
-  void information(BuildContext context, String title, String content) {
-    showModalBottomSheet(
-      context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
-      builder: (c) => SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
+
+  void sheet(BuildContext context, String title, Widget content) =>
+      showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        showDragHandle: true,
+        builder: (c) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(22, 8, 22, 32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                GmPageTitle(title),
+                const SizedBox(height: 18),
+                content,
+                const SizedBox(height: 20),
+                GmAction(label: 'Entendido', onPressed: () => Navigator.pop(c)),
+              ],
+            ),
+          ),
+        ),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    final prefs = PreferencesScope.of(context);
+    final role =
+        {
+          'admin': 'Administrador',
+          'medicion': 'Medición y cotización',
+          'cotizacion': 'Medición y cotización',
+          'instalacion': 'Instalación',
+        }[session.user?['role']] ??
+        'Trabajador';
+    return ListView(
+      key: const PageStorageKey('settings'),
+      padding: const EdgeInsets.fromLTRB(18, 22, 18, 32),
+      children: [
+        GmPanel(
+          child: Row(
             children: [
-              Text(title, style: Theme.of(c).textTheme.headlineMedium),
-              const SizedBox(height: 16),
-              Text(content, style: const TextStyle(height: 1.7)),
-              const SizedBox(height: 18),
-              Align(
-                alignment: Alignment.centerRight,
-                child: FilledButton(
-                  onPressed: () => Navigator.pop(c),
-                  child: const Text('Entendido'),
+              const CircleAvatar(
+                radius: 28,
+                backgroundColor: gmRed,
+                child: Icon(
+                  Icons.person_outline,
+                  color: Colors.white,
+                  size: 30,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      session.user?['name']?.toString() ?? 'Trabajador',
+                      style: const TextStyle(
+                        color: gmNavy,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 18,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      role,
+                      style: const TextStyle(color: Color(0xff53606b)),
+                    ),
+                    if (!session.demo)
+                      Text(
+                        session.user?['email']?.toString() ?? '',
+                        style: const TextStyle(
+                          color: Color(0xff6c7680),
+                          fontSize: 12,
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final prefs = PreferencesScope.of(context),
-        scheme = Theme.of(context).colorScheme;
-    return ListView(
-      key: const PageStorageKey('settings'),
-      padding: const EdgeInsets.fromLTRB(22, 22, 22, 32),
-      children: [
-        Text('A tu manera.', style: Theme.of(context).textTheme.headlineLarge),
-        const SizedBox(height: 20),
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: CircleAvatar(
-            radius: 26,
-            backgroundColor: scheme.primaryContainer,
-            child: Icon(Icons.person_outline, color: scheme.onPrimaryContainer),
-          ),
-          title: Text(
-            session.user?['name'] ?? '',
-            style: const TextStyle(fontWeight: FontWeight.w700),
-          ),
-          subtitle: Text(
-            session.demo ? 'Demo de trabajador' : session.user?['email'] ?? '',
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Rol: ${{'admin': 'Administrador', 'medicion': 'Medición y cotización', 'cotizacion': 'Medición y cotización', 'instalacion': 'Instalación'}[session.user?['role']] ?? 'Trabajador'}',
-          style: TextStyle(color: scheme.onSurfaceVariant),
-        ),
-        const Divider(height: 36),
-        Text('Apariencia', style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 16),
-        SegmentedButton<ThemeMode>(
-          showSelectedIcon: false,
-          segments: const [
-            ButtonSegment(
-              value: ThemeMode.light,
-              icon: Icon(Icons.light_mode_outlined),
-              label: Text('Claro'),
-            ),
-            ButtonSegment(
-              value: ThemeMode.dark,
-              icon: Icon(Icons.dark_mode_outlined),
-              label: Text('Oscuro'),
-            ),
-            ButtonSegment(
-              value: ThemeMode.system,
-              icon: Icon(Icons.brightness_auto_outlined),
-              label: Text('Sistema'),
-            ),
-          ],
-          selected: {prefs.mode},
-          onSelectionChanged: (v) => prefs.setMode(v.first),
-        ),
         const SizedBox(height: 22),
-        const Text(
-          'Color de acento',
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [
-            for (final entry in [
-              (Accent.gold, 'Dorado', const Color(0xff946A29)),
-              (Accent.blue, 'Azul', const Color(0xff15357E)),
-              (Accent.forest, 'Verde', const Color(0xff29634C)),
-            ])
-              ChoiceChip(
-                avatar: CircleAvatar(backgroundColor: entry.$3, radius: 9),
-                label: Text(entry.$2),
-                selected: prefs.accent == entry.$1,
-                onSelected: (_) => prefs.setAccent(entry.$1),
+        GmPanel(
+          padding: EdgeInsets.zero,
+          child: Column(
+            children: [
+              _item(
+                Icons.wifi,
+                'Conexión',
+                () => sheet(
+                  context,
+                  'Conexión',
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ListenableBuilder(
+                        listenable: monitor,
+                        builder: (c, _) => Text(
+                          monitor.state == ServerState.online
+                              ? 'Servidor G&M disponible'
+                              : 'Servidor sin conexión',
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      SelectableText(session.api.endpoint),
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed: monitor.check,
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Comprobar conexión'),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        SwitchListTile.adaptive(
-          contentPadding: EdgeInsets.zero,
-          title: const Text('Reducir animaciones'),
-          subtitle: const Text(
-            'Transiciones más discretas. También respeta el ajuste de accesibilidad del teléfono.',
-          ),
-          value: prefs.reduceMotion,
-          onChanged: prefs.setMotion,
-        ),
-        const Divider(height: 32),
-        Text('Conexión y datos', style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 12),
-        ListenableBuilder(
-          listenable: monitor,
-          builder: (c, _) => ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: Icon(
-              monitor.state == ServerState.online
-                  ? Icons.cloud_done_outlined
-                  : Icons.cloud_off_outlined,
-              color: scheme.primary,
-            ),
-            title: Text(
-              monitor.state == ServerState.online
-                  ? 'Servidor disponible'
-                  : 'Servidor sin conexión',
-            ),
-            subtitle: Text(session.api.endpoint),
-            trailing: IconButton(
-              tooltip: 'Comprobar conexión',
-              onPressed: monitor.check,
-              icon: const Icon(Icons.refresh),
-            ),
-          ),
-        ),
-        const Note(
-          'Los borradores se guardan en este teléfono. Al enviar una visita, el administrador la recibe en la web. La sesión necesita renovarse cuando vence.',
-        ),
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: const Icon(Icons.help_outline),
-          title: const Text('Conectar por Wi-Fi'),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () => information(
-            context,
-            'Tu móvil y la web',
-            'Conecta el celular y el equipo a la misma red Wi-Fi, y mantén Docker encendido. Esta versión puede usar HTTPS local por Wi-Fi: no necesita USB, depuración ni modo desarrollador.\n\nLa app comprueba el servidor al abrirse y cada 20 segundos mientras está en primer plano. Si Docker está apagado, puedes continuar guardando borradores.\n\nEn el inicio de sesión puedes configurar la URL HTTPS del servidor. Si cambia la IP del equipo, actualiza esa dirección. Para otra instalación hay que generar y exportar su certificado público según el README. Fuera de la red local necesitas un servidor HTTPS accesible.',
-          ),
-        ),
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: const Icon(Icons.shield_outlined),
-          title: const Text('Privacidad y acceso'),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () => information(
-            context,
-            'Tu información, protegida',
-            'El administrador de G&M crea las cuentas y asigna los permisos. Las claves de servicios de IA se almacenan únicamente en el backend; no se incluyen en el APK.\n\nTu sesión y borradores se guardan con almacenamiento seguro. Las fotos permanecen en el espacio privado de la app hasta enviarlas. Al compartir un PDF, tú eliges la aplicación y el destinatario.\n\nLa demo usa registros locales separados de los clientes reales.',
-          ),
-        ),
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: const Icon(Icons.info_outline),
-          title: const Text('G&M Campo'),
-          subtitle: const Text('Versión 1.2.0 · Visitas técnicas'),
-          onTap: () => information(
-            context,
-            'G&M Campo',
-            'Aplicación de trabajo para G&M Melacampos. Registro de medidas, catálogo, bosquejo, proforma y seguimiento administrativo.\n\nLas imágenes IA son conceptuales. Las medidas y el importe requieren validación técnica y administrativa.',
+              const Divider(height: 1),
+              _item(
+                Icons.sync,
+                'Sincronización y datos',
+                () => sheet(
+                  context,
+                  'Sincronización y datos',
+                  const Text(
+                    'Los borradores se guardan en este iPhone. Cuando envías una visita, el administrador la recibe en la web. Desliza hacia abajo en Inicio o Visitas para actualizar los datos.',
+                    style: TextStyle(height: 1.5),
+                  ),
+                ),
+              ),
+              const Divider(height: 1),
+              _item(
+                Icons.palette_outlined,
+                'Apariencia',
+                () => sheet(
+                  context,
+                  'Apariencia',
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SegmentedButton<ThemeMode>(
+                        showSelectedIcon: false,
+                        segments: const [
+                          ButtonSegment(
+                            value: ThemeMode.light,
+                            label: Text('Claro'),
+                          ),
+                          ButtonSegment(
+                            value: ThemeMode.dark,
+                            label: Text('Oscuro'),
+                          ),
+                          ButtonSegment(
+                            value: ThemeMode.system,
+                            label: Text('Sistema'),
+                          ),
+                        ],
+                        selected: {prefs.mode},
+                        onSelectionChanged: (v) => prefs.setMode(v.first),
+                      ),
+                      const SizedBox(height: 12),
+                      SwitchListTile.adaptive(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Reducir animaciones'),
+                        value: prefs.reduceMotion,
+                        onChanged: prefs.setMotion,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const Divider(height: 1),
+              _item(
+                Icons.help_outline,
+                'Ayuda',
+                () => sheet(
+                  context,
+                  'Ayuda',
+                  const Text(
+                    'Registra cliente, piezas y medidas; elige un material y prepara el PDF único con cotización y bosquejos. La visualización con IA es conceptual. Para cambiar la dirección del servidor, usa Configurar conexión en el acceso.',
+                    style: TextStyle(height: 1.5),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 24),
         OutlinedButton.icon(
-          onPressed: () async {
-            await session.logout();
-          },
+          onPressed: session.logout,
+          style: OutlinedButton.styleFrom(
+            foregroundColor: gmRed,
+            side: const BorderSide(color: gmRed),
+          ),
           icon: const Icon(Icons.logout),
           label: const Text('Cerrar sesión'),
         ),
       ],
     );
   }
+
+  Widget _item(IconData icon, String title, VoidCallback onTap) => ListTile(
+    leading: Icon(icon, color: gmNavy),
+    title: Text(
+      title,
+      style: const TextStyle(color: gmNavy, fontWeight: FontWeight.w600),
+    ),
+    trailing: const Icon(Icons.chevron_right, color: gmNavy),
+    onTap: onTap,
+  );
 }

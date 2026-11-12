@@ -10,12 +10,14 @@ class HomePage extends StatelessWidget {
   final void Function(Visit?) onOpen;
   final VoidCallback onVisits;
   final VoidCallback onMaterials;
+  final VoidCallback onTracking;
   const HomePage({
     super.key,
     required this.repo,
     required this.onOpen,
     required this.onVisits,
     required this.onMaterials,
+    required this.onTracking,
   });
 
   @override
@@ -56,7 +58,7 @@ class HomePage extends StatelessWidget {
               repo.session.canEdit ? () => onOpen(null) : null,
             ),
             _Shortcut(Icons.assignment_outlined, 'Mis visitas', onVisits),
-            _Shortcut(Icons.timeline, 'Seguimiento', onVisits),
+            _Shortcut(Icons.timeline, 'Seguimiento', onTracking),
             _Shortcut(Icons.layers_outlined, 'Materiales', onMaterials),
           ],
         ),
