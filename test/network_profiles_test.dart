@@ -5,6 +5,19 @@ import 'package:gm_campo/core/api.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  test('saved LAN address follows the current build without losing session', () async {
+    if (!Api.networkBases.contains(Api.defaultBase)) return;
+    final previous = Api.networkBases.first;
+    FlutterSecureStorage.setMockInitialValues({
+      'server': previous,
+      'session': 'session=test',
+    });
+    final api = Api();
+    await api.init();
+    expect(api.base, Api.defaultBase);
+    expect(api.cookie, 'session=test');
+    expect(await Api.storage.read(key: 'server'), Api.defaultBase);
+  });
   test(
     'alias migration merges once and never resurrects removed drafts',
     () async {

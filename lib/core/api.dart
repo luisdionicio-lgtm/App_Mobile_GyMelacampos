@@ -82,6 +82,12 @@ class Api {
   Future<void> init() async {
     final saved = await storage.read(key: 'server');
     base = saved ?? defaultBase;
+    if (networkBases.contains(base) &&
+        networkBases.contains(defaultBase) &&
+        base != defaultBase) {
+      base = defaultBase;
+      await storage.write(key: 'server', value: base);
+    }
     if (defaultBase.startsWith('https://') &&
         (saved == null || isUsbBridge(saved))) {
       final old = saved ?? 'http://127.0.0.1:8080';
