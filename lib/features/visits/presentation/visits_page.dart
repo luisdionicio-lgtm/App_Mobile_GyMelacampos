@@ -149,6 +149,7 @@ class _VisitsState extends State<VisitsPage> {
                     visit,
                     onTap: () => widget.onOpen(visit),
                     onDelete: !visit.synced ? () => remove(visit) : null,
+                    serverBase: widget.repo.session.api.endpoint,
                   ),
                 if (widget.repo.session.demo)
                   const Note(

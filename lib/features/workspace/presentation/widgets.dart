@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/brand_ui.dart';
 import '../../../core/connection.dart';
 import '../../visits/domain/visit.dart';
 
@@ -68,36 +69,47 @@ class VisitTile extends StatelessWidget {
   final Visit visit;
   final VoidCallback onTap;
   final VoidCallback? onDelete;
-  const VisitTile(this.visit, {super.key, required this.onTap, this.onDelete});
+  final String? serverBase;
+  const VisitTile(
+    this.visit, {
+    super.key,
+    required this.onTap,
+    this.onDelete,
+    this.serverBase,
+  });
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final img = visit.material?['img']?.toString();
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Material(
-        color: scheme.surfaceContainerLow,
+        color: scheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(16),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.all(12),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: 46,
-                  height: 46,
+                  width: 64,
+                  height: 64,
                   decoration: BoxDecoration(
-                    color: scheme.primaryContainer,
+                    color: gmCream,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(
-                    visit.project == 'Baño'
-                        ? Icons.bathtub_outlined
-                        : Icons.countertops_outlined,
-                    color: scheme.onPrimaryContainer,
-                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: img != null && serverBase != null
+                      ? Image.network(
+                          '$serverBase$img',
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) =>
+                              const Icon(Icons.layers_outlined, color: gmGold),
+                        )
+                      : const Icon(Icons.layers_outlined, color: gmGold),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -109,36 +121,18 @@ class VisitTile extends StatelessWidget {
                             ? 'Visita sin nombre'
                             : visit.client,
                         style: Theme.of(context).textTheme.titleMedium!
-                            .copyWith(fontWeight: FontWeight.w700),
+                            .copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: gmNavy,
+                            ),
                       ),
                       const SizedBox(height: 5),
                       Text(
-                        '${visit.project} · ${visit.area.toStringAsFixed(2)} m²',
+                        '${visit.project} · ${visit.material?['name'] ?? 'Sin material'}',
                         style: TextStyle(color: scheme.onSurfaceVariant),
                       ),
                       const SizedBox(height: 9),
-                      Row(
-                        children: [
-                          Icon(
-                            visit.synced
-                                ? Icons.cloud_done_outlined
-                                : Icons.edit_note,
-                            size: 15,
-                            color: scheme.primary,
-                          ),
-                          const SizedBox(width: 5),
-                          Flexible(
-                            child: Text(
-                              visit.status,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: scheme.primary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                      GmStatus(visit.status),
                     ],
                   ),
                 ),

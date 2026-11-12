@@ -134,7 +134,12 @@ class _WorkspaceState extends State<Workspace> {
                 onPageChanged: (index) => setState(() => tab = index),
                 physics: reduce ? const NeverScrollableScrollPhysics() : null,
                 children: [
-                  HomePage(repo: repo, onOpen: open, onVisits: () => select(1)),
+                  HomePage(
+                    repo: repo,
+                    onOpen: open,
+                    onVisits: () => select(1),
+                    onMaterials: () => select(2),
+                  ),
                   KeepAlivePage(
                     child: VisitsPage(repo: repo, onOpen: open),
                   ),
@@ -161,7 +166,11 @@ class _WorkspaceState extends State<Workspace> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Brand(),
+          title: tab == 0
+              ? const Brand(onNavy: true)
+              : Text(
+                  const ['Inicio', 'Mis visitas', 'Materiales', 'Cuenta'][tab],
+                ),
           actions: [
             IconButton(
               tooltip: 'Actualizar datos',

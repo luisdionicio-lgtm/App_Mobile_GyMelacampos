@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'brand_ui.dart';
 
 const gold = Color(0xff946A29),
     carbon = Color(0xff171715),
@@ -37,13 +38,11 @@ ThemeData gmTheme({
       ),
     ),
     appBarTheme: AppBarTheme(
-      backgroundColor: scheme.surface,
-      foregroundColor: scheme.onSurface,
-      centerTitle: false,
+      backgroundColor: gmNavy,
+      foregroundColor: Colors.white,
+      centerTitle: true,
       scrolledUnderElevation: 0,
-      systemOverlayStyle: dark
-          ? SystemUiOverlayStyle.light
-          : SystemUiOverlayStyle.dark,
+      systemOverlayStyle: SystemUiOverlayStyle.light,
     ),
     cardTheme: CardThemeData(
       elevation: 0,
@@ -65,6 +64,8 @@ ThemeData gmTheme({
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
+        backgroundColor: gmRed,
+        foregroundColor: Colors.white,
         minimumSize: const Size(48, 52),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
@@ -76,9 +77,14 @@ ThemeData gmTheme({
       ),
     ),
     navigationBarTheme: NavigationBarThemeData(
-      backgroundColor: scheme.surfaceContainerLow,
-      indicatorColor: scheme.primaryContainer,
-      height: 76,
+      backgroundColor: scheme.surfaceContainerLowest,
+      indicatorColor: gmRed,
+      height: 72,
+      iconTheme: WidgetStateProperty.resolveWith(
+        (states) => IconThemeData(
+          color: states.contains(WidgetState.selected) ? Colors.white : gmNavy,
+        ),
+      ),
       labelTextStyle: WidgetStateProperty.resolveWith(
         (states) => TextStyle(
           fontFamily: 'DM Sans',
@@ -86,7 +92,7 @@ ThemeData gmTheme({
           fontWeight: states.contains(WidgetState.selected)
               ? FontWeight.w700
               : FontWeight.w500,
-          color: scheme.onSurface,
+          color: states.contains(WidgetState.selected) ? gmRed : gmNavy,
         ),
       ),
     ),
@@ -104,11 +110,16 @@ ThemeData gmTheme({
 
 class Brand extends StatelessWidget {
   final bool large;
-  const Brand({super.key, this.large = false});
+  final bool onNavy;
+  const Brand({super.key, this.large = false, this.onNavy = false});
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    final blue = dark ? const Color(0xff9BB8FF) : const Color(0xff15357E);
+    final blue = onNavy
+        ? Colors.white
+        : dark
+        ? const Color(0xff9BB8FF)
+        : const Color(0xff15357E);
     return Semantics(
       label: 'G y M Melacampos',
       child: FittedBox(
@@ -157,7 +168,9 @@ class Brand extends StatelessWidget {
                   'Mármol · Granito · Cuarzo',
                   style: TextStyle(
                     fontSize: large ? 11 : 9,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    color: onNavy
+                        ? Colors.white70
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
