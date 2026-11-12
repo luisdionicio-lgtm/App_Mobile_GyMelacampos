@@ -27,6 +27,8 @@ class Api {
     'https://192.168.18.103:8443',
     'https://10.149.160.129:8444',
     'https://10.149.160.129:8443',
+    'https://192.168.100.44:8443',
+    'https://192.168.100.45:8443',
   ];
   String? _route;
   String get storageBase =>
@@ -37,7 +39,12 @@ class Api {
       _selection ??= _selectNetwork().whenComplete(() => _selection = null);
   Future<bool> _selectNetwork() async {
     final candidates = networkBases.contains(base)
-        ? {if (_route != null) _route!, ...networkBases.take(2)}
+        ? {
+            if (_route != null) _route!,
+            base,
+            if (networkBases.contains(defaultBase)) defaultBase,
+            ...networkBases,
+          }
         : {base};
     final results = await Future.wait(
       candidates.map((candidate) async {
