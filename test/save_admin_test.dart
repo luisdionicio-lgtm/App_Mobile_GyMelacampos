@@ -23,6 +23,18 @@ class SavingApi extends Api {
         'preview': {'code': 'SOL-TEST', 'preliminary': null},
       };
     }
+    if (path == '/mobile/preview' && method == 'POST') {
+      return {
+        'material': {
+          'id': 'material-1',
+          'name': 'Cuarzo',
+          'cat': 'Cuarzo',
+          'img': '/sample.png',
+          'pricePerM2': 0,
+        },
+        'preview': {'code': 'SOL-TEST', 'preliminary': null},
+      };
+    }
     throw Exception('Ruta inesperada');
   }
 }
@@ -74,6 +86,14 @@ void main() {
         ),
       );
       await tester.tap(find.text('Abrir visita'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Siguiente'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Siguiente'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Calcular propuesta'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Siguiente'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Guardar en admin'));
       await tester.pumpAndSettle();

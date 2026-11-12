@@ -3,6 +3,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import '../../../core/brand_ui.dart';
+import '../../catalog/presentation/catalog_page.dart';
+import 'proposal_preview.dart';
 import '../../../core/theme.dart';
 import '../domain/visit.dart';
 import '../data/visit_repository.dart';
@@ -38,6 +41,9 @@ class _EditorState extends State<VisitEditor> {
     phone = TextEditingController(text: visit.phone);
     location = TextEditingController(text: visit.location);
     notes = TextEditingController(text: visit.notes);
+    for (final c in [client, phone, location, notes]) {
+      c.addListener(queueSave);
+    }
     if (visit.imageFile != null) {
       imageUrl =
           '${repo.session.api.endpoint}/api/mobile/visits/${visit.id}/files/${visit.imageFile}';
@@ -89,7 +95,7 @@ class _EditorState extends State<VisitEditor> {
 
   Future<void> preview() async {
     if (visit.synced) {
-      setState(() => step = 1);
+      setState(() => step = 3);
       if (scrollController.hasClients) scrollController.jumpTo(0);
       return;
     }
@@ -127,7 +133,7 @@ class _EditorState extends State<VisitEditor> {
         await repo.calculate(visit);
       }
       if (mounted) {
-        setState(() => step = 1);
+        setState(() => step = 3);
         if (scrollController.hasClients) scrollController.jumpTo(0);
       }
     });
@@ -240,6 +246,96 @@ class _EditorState extends State<VisitEditor> {
     padding: const EdgeInsets.only(top: 14, bottom: 18),
     child: Text(text, style: Theme.of(context).textTheme.headlineMedium),
   );
+  void moveTo(int nextStep) {
+    FocusScope.of(context).unfocus();
+    collect();
+    if (!visit.synced) unawaited(repo.save(visit));
+    setState(() => step = nextStep);
+    if (scrollController.hasClients) scrollController.jumpTo(0);
+  }
+
+  Future<void> next() async {
+    if (step == 0 || step == 1) {
+      if (!form.currentState!.validate()) return;
+      moveTo(step + 1);
+    } else if (step == 2) {
+      await preview();
+    } else if (step == 3) {
+      moveTo(4);
+    }
+  }
+
+  void openPdf() => Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => ProposalPreviewPage(
+        visit,
+        serverBase: repo.session.api.base,
+        demo: repo.session.demo,
+      ),
+    ),
+  );
+
+  Future<void> pickMaterial() async {
+    final selected = await Navigator.push<Map<String, dynamic>>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => Scaffold(
+          appBar: AppBar(title: const Text('Elegir material')),
+          body: CatalogPage(
+            repo: repo,
+            onUse: (choice) => Navigator.pop(context, choice.material),
+          ),
+        ),
+      ),
+    );
+    if (selected == null) return;
+    setState(() {
+      visit.material = selected;
+      visit.materialId = selected['id'];
+    });
+    queueSave();
+    unawaited(loadMaterialTexture(visit, repo.session.api.base));
+  }
+
+  Widget progress() => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 16),
+    child: Row(
+      children: [
+        for (var i = 0; i < 5; i++) ...[
+          if (i > 0)
+            Expanded(
+              child: Container(
+                height: 2,
+                color: i <= step ? gmRed : const Color(0xffd5dbe2),
+              ),
+            ),
+          InkWell(
+            onTap: i < step ? () => moveTo(i) : null,
+            child: Column(
+              children: [
+                CircleAvatar(
+                  radius: 14,
+                  backgroundColor: i <= step ? gmRed : const Color(0xffe7ebf0),
+                  child: Text(
+                    '${i + 1}',
+                    style: TextStyle(
+                      color: i <= step ? Colors.white : gmNavy,
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
+                Text(
+                  const ['Cliente', 'Piezas', 'Material', 'IA', 'PDF'][i],
+                  style: const TextStyle(fontSize: 10),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    ),
+  );
   @override
   Widget build(BuildContext context) {
     final editable = repo.session.canEdit && !visit.synced;
@@ -247,9 +343,23 @@ class _EditorState extends State<VisitEditor> {
     final canPropose = canGenerateProposal(role?.toString() ?? '');
     return Scaffold(
       appBar: AppBar(
-        title: Text(step == 0 ? 'Visita técnica' : 'Propuesta del proyecto'),
+        title: Text(
+          const [
+            'Nueva visita',
+            'Piezas y medidas',
+            'Material',
+            'Visualizar con IA',
+            'Propuesta',
+          ][step],
+        ),
+        leading: IconButton(
+          tooltip: 'Volver',
+          onPressed: () =>
+              step == 0 ? Navigator.pop(context) : moveTo(step - 1),
+          icon: const Icon(Icons.arrow_back),
+        ),
         actions: [
-          if (step == 0)
+          if (step == 4)
             TextButton(
               onPressed: busy ? null : saveToAdmin,
               child: Text(
@@ -262,14 +372,24 @@ class _EditorState extends State<VisitEditor> {
             ),
         ],
       ),
-      bottomNavigationBar: step == 0 && canPropose
+      bottomNavigationBar: canPropose
           ? SafeArea(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(22, 10, 22, 12),
-                child: FilledButton.icon(
-                  onPressed: busy ? null : preview,
-                  icon: const Icon(Icons.architecture),
-                  label: const Text('Generar propuesta completa'),
+                child: GmAction(
+                  onPressed: busy
+                      ? null
+                      : step == 4
+                      ? openPdf
+                      : next,
+                  icon: step == 4
+                      ? Icons.picture_as_pdf_outlined
+                      : Icons.arrow_forward,
+                  label: step == 4
+                      ? 'Ver PDF completo'
+                      : step == 2
+                      ? 'Calcular propuesta'
+                      : 'Siguiente',
                 ),
               ),
             )
@@ -279,8 +399,9 @@ class _EditorState extends State<VisitEditor> {
           key: form,
           child: ListView(
             controller: scrollController,
-            padding: const EdgeInsets.fromLTRB(22, 8, 22, 32),
+            padding: const EdgeInsets.fromLTRB(18, 0, 18, 32),
             children: [
+              progress(),
               if (repo.session.demo)
                 const Note(
                   'DEMO · Solo en este dispositivo. Los datos de ejemplo no se envían a la web.',
@@ -292,7 +413,11 @@ class _EditorState extends State<VisitEditor> {
                 ),
               if (busy) const LinearProgressIndicator(),
               if (step == 0) ...[
-                heading('El proyecto'),
+                const GmPageTitle(
+                  'Datos del cliente',
+                  subtitle: 'Identifica a quién pertenece esta visita.',
+                ),
+                const SizedBox(height: 16),
                 field('Nombre del cliente', client),
                 TextFormField(
                   controller: phone,
@@ -316,12 +441,18 @@ class _EditorState extends State<VisitEditor> {
                       ? (v) => setState(() => visit.project = v!)
                       : null,
                 ),
+              ],
+              if (step == 1) ...[
+                const GmPageTitle(
+                  'Piezas y medidas',
+                  subtitle: 'Registra las dimensiones de cada pieza.',
+                ),
                 heading('Medidas de las piezas'),
                 const Note(
                   'Largo y ancho en metros; espesor en centímetros. Agrega cada encimera, zócalo o pared como una pieza rectangular independiente.',
                 ),
                 for (int i = 0; i < visit.pieces.length; i++)
-                  pieceForm(i, editable),
+                  GmPanel(child: pieceForm(i, editable)),
                 if (editable && visit.pieces.length < 30)
                   OutlinedButton.icon(
                     onPressed: () => setState(
@@ -337,6 +468,60 @@ class _EditorState extends State<VisitEditor> {
                   'Área neta: ${visit.area.toStringAsFixed(3)} m² · ${visit.linear.toStringAsFixed(2)} ML',
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
+                const SizedBox(height: 16),
+                Sketch(visit),
+                heading('Evidencias y detalles'),
+                field(
+                  'Observaciones, cortes y acabados',
+                  notes,
+                  maxLines: 3,
+                  required: false,
+                ),
+                if (visit.photo != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Image.file(
+                      File(visit.photo!),
+                      height: 180,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                if (editable)
+                  Wrap(
+                    spacing: 12,
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: busy
+                            ? null
+                            : () => photograph(ImageSource.camera),
+                        icon: const Icon(Icons.photo_camera_outlined),
+                        label: const Text('Tomar foto'),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: busy
+                            ? null
+                            : () => photograph(ImageSource.gallery),
+                        icon: const Icon(Icons.photo_library_outlined),
+                        label: const Text('Galería'),
+                      ),
+                    ],
+                  ),
+              ],
+              if (step == 2) ...[
+                const GmPageTitle(
+                  'Elige el material',
+                  subtitle: 'El catálogo real de G&M para tu proyecto.',
+                ),
+                const SizedBox(height: 16),
+                if (editable) ...[
+                  GmAction(
+                    label: 'Explorar catálogo',
+                    icon: Icons.search,
+                    onPressed: pickMaterial,
+                    gold: true,
+                  ),
+                  const SizedBox(height: 16),
+                ],
                 heading('El material'),
                 if (repo.materials.isEmpty)
                   const Note(
@@ -418,48 +603,56 @@ class _EditorState extends State<VisitEditor> {
                 const Note(
                   'Se aplican las tarifas de la web. Los materiales sin precio quedan por evaluar. El área no incluye merma ni optimización de cortes.',
                 ),
-                heading('Evidencias y detalles'),
-                field(
-                  'Observaciones, cortes y acabados',
-                  notes,
-                  maxLines: 3,
-                  required: false,
+              ],
+              if (step == 3) ...[
+                const GmPageTitle(
+                  'Visualizar con IA',
+                  subtitle: 'Una idea de cómo luciría el material elegido.',
                 ),
-                if (visit.photo != null)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: Image.file(
-                      File(visit.photo!),
-                      height: 180,
+                const SizedBox(height: 16),
+                if (imageUrl == null)
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Image.asset(
+                      'assets/stone.png',
+                      height: 230,
                       fit: BoxFit.cover,
                     ),
-                  ),
-                if (editable)
-                  Wrap(
-                    spacing: 12,
-                    children: [
-                      OutlinedButton.icon(
-                        onPressed: busy
-                            ? null
-                            : () => photograph(ImageSource.camera),
-                        icon: const Icon(Icons.photo_camera_outlined),
-                        label: const Text('Tomar foto'),
+                  )
+                else
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Image.network(
+                      imageUrl!,
+                      height: 230,
+                      fit: BoxFit.cover,
+                      headers: repo.session.api.cookie == null
+                          ? {}
+                          : {'Cookie': repo.session.api.cookie!},
+                      errorBuilder: (_, e, s) => const Note(
+                        'No se pudo cargar la imagen. Revisa tu sesión.',
                       ),
-                      OutlinedButton.icon(
-                        onPressed: busy
-                            ? null
-                            : () => photograph(ImageSource.gallery),
-                        icon: const Icon(Icons.photo_library_outlined),
-                        label: const Text('Galería'),
-                      ),
-                    ],
+                    ),
                   ),
-                const SizedBox(height: 24),
                 const Note(
-                  "El borrador se guarda automáticamente en este teléfono. Usa «Guardar en admin» para enviar medidas y cotización a la web.",
-                  icon: Icons.save_outlined,
+                  'Imagen conceptual. No reproduce las medidas exactas ni reemplaza el bosquejo técnico.',
                 ),
-              ] else ...[
+                GmAction(
+                  onPressed: busy ? null : generate,
+                  icon: Icons.auto_awesome,
+                  label: busy ? 'Procesando…' : 'Generar visualización',
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Puedes continuar sin generar una imagen.',
+                  textAlign: TextAlign.center,
+                ),
+              ],
+              if (step == 4) ...[
+                const GmPageTitle(
+                  'Propuesta completa',
+                  subtitle: 'Cotización, cliente y bosquejos en un solo PDF.',
+                ),
                 heading(visit.project),
                 Text('${visit.client} · ${visit.location}'),
                 const SizedBox(height: 10),
@@ -518,6 +711,28 @@ class _EditorState extends State<VisitEditor> {
                     ),
                   ),
                 const SizedBox(height: 16),
+                const GmPanel(
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.picture_as_pdf_outlined,
+                        color: gmRed,
+                        size: 30,
+                      ),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'PDF único: cotización + bosquejos + datos del cliente',
+                          style: TextStyle(
+                            color: gmNavy,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
                 OutlinedButton.icon(
                   onPressed: busy || !canPropose
                       ? null
@@ -531,30 +746,6 @@ class _EditorState extends State<VisitEditor> {
                         }),
                   icon: const Icon(Icons.picture_as_pdf_outlined),
                   label: const Text('Compartir propuesta completa PDF'),
-                ),
-                heading('Imagen referencial'),
-                if (imageUrl != null)
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.network(
-                      imageUrl!,
-                      headers: repo.session.api.cookie == null
-                          ? {}
-                          : {'Cookie': repo.session.api.cookie!},
-                      errorBuilder: (_, e, s) => const Note(
-                        'No se pudo cargar la imagen. Revisa tu sesión.',
-                      ),
-                    ),
-                  ),
-                const Note(
-                  'La IA representa el ambiente y material elegidos. Las proporciones son orientativas; no sustituye el bosquejo ni un plano de fabricación. Requiere conexión y una clave válida en el servidor.',
-                ),
-                OutlinedButton.icon(
-                  onPressed: busy ? null : generate,
-                  icon: const Icon(Icons.auto_awesome_outlined),
-                  label: Text(
-                    busy ? 'Procesando…' : 'Generar imagen referencial',
-                  ),
                 ),
                 const SizedBox(height: 24),
                 if (!visit.synced && !repo.session.demo)

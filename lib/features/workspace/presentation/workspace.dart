@@ -58,6 +58,13 @@ class _WorkspaceState extends State<Workspace> {
   }
 
   Future<void> open(Visit? visit) async {
+    if (!widget.session.canEdit && visit != null) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => TrackingDetailPage(visit)),
+      );
+      return;
+    }
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => VisitEditor(repo, existing: visit)),

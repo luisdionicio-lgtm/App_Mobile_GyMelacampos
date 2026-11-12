@@ -71,18 +71,12 @@ class _VisitsState extends State<VisitsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Mis visitas',
-                  style: Theme.of(context).textTheme.headlineLarge,
-                ),
-                const SizedBox(height: 8),
-                const Text('Cada medida y propuesta, en su lugar.'),
-                const SizedBox(height: 20),
+                const SizedBox(height: 2),
                 TextField(
                   controller: controller,
                   onChanged: (v) => setState(() => search = v),
                   decoration: InputDecoration(
-                    labelText: 'Buscar cliente o proyecto',
+                    hintText: 'Buscar cliente, ambiente o material',
                     prefixIcon: const Icon(Icons.search),
                     suffixIcon: search.isEmpty
                         ? null

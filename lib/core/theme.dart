@@ -98,7 +98,8 @@ ThemeData gmTheme({
     ),
     tabBarTheme: TabBarThemeData(
       dividerColor: Colors.transparent,
-      labelColor: scheme.primary,
+      labelColor: gmRed,
+      indicatorColor: gmRed,
       unselectedLabelColor: scheme.onSurfaceVariant,
     ),
     snackBarTheme: SnackBarThemeData(
