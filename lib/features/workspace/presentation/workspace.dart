@@ -134,7 +134,7 @@ class _WorkspaceState extends State<Workspace> {
     ];
     final content = Column(
       children: [
-        ConnectionStrip(monitor, demo: widget.session.demo),
+        if (!widget.session.demo) ConnectionStrip(monitor),
         if (loading) const LinearProgressIndicator(minHeight: 2),
         Expanded(
           child: RefreshIndicator(

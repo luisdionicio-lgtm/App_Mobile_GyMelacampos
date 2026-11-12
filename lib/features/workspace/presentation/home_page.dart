@@ -63,7 +63,15 @@ class HomePage extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 24),
-        const GmPageTitle('Último trabajo'),
+        const Text(
+          'Último trabajo',
+          style: TextStyle(
+            fontFamily: 'Playfair Display',
+            fontSize: 21,
+            fontWeight: FontWeight.w700,
+            color: gmNavy,
+          ),
+        ),
         const SizedBox(height: 12),
         if (last == null)
           const GmPanel(

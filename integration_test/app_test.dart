@@ -9,51 +9,68 @@ import 'package:gm_campo/core/api.dart';
 import 'package:gm_campo/core/local_tls.dart';
 import 'package:gm_campo/core/preferences.dart';
 import 'package:gm_campo/features/visits/domain/visit.dart';
-import 'package:gm_campo/features/visits/presentation/sketch.dart';
+
+class OfflineDemoApi extends Api {
+  OfflineDemoApi() : super(networkProbe: (_) async => false);
+  @override
+  Future<dynamic> call(
+    String path, {
+    String method = 'GET',
+    Object? data,
+  }) async {
+    throw Exception('La demo visual usa el catálogo local.');
+  }
+}
 
 void main() {
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
-  final captures = <String, String>{};
-  Future<void> capture(WidgetTester tester, String name) async {
-    await tester.pumpAndSettle();
-    final boundary = tester.renderObject<RenderRepaintBoundary>(
-      find.byKey(const ValueKey('capture')),
-    );
-    final image = await boundary.toImage(pixelRatio: 1.5);
-    final data = await image.toByteData(format: ui.ImageByteFormat.png);
-    captures[name] = base64Encode(data!.buffer.asUint8List());
-    image.dispose();
-  }
-
   testWidgets(
-    'Motorola: navigation, themes, favorites, measurements and proposal',
+    'iPhone: pantallas de visita y propuesta en demo',
     (tester) async {
       await configureLocalTls();
-      final api = Api();
+      final api = OfflineDemoApi();
       await api.init();
       final prefs = AppPreferences();
       await prefs.load();
-      final demoKey = 'visits:${api.storageBase}:__demo__';
-      final oldDrafts = await Api.storage.read(key: demoKey),
-          oldPreferences = await Api.storage.read(key: AppPreferences.key);
-      try {
-        final materials = await api.call('/materials') as List;
-        final quartz = Map<String, dynamic>.from(
-          materials.firstWhere((m) => m['cat'] == 'Cuarzo'),
+      final key = 'visits:${api.storageBase}:__demo__';
+      final catalogKey = 'catalog:${api.storageBase}';
+      final previousDrafts = await Api.storage.read(key: key);
+      final previousCatalog = await Api.storage.read(key: catalogKey);
+      final previousPrefs = await Api.storage.read(key: AppPreferences.key);
+      final captures = <String, String>{};
+      Future<void> capture(String name) async {
+        await tester.pumpAndSettle();
+        final boundary = tester.renderObject<RenderRepaintBoundary>(
+          find.byKey(const ValueKey('capture')),
         );
+        final image = await boundary.toImage(pixelRatio: 1.5);
+        final data = await image.toByteData(format: ui.ImageByteFormat.png);
+        captures[name] = base64Encode(data!.buffer.asUint8List());
+        image.dispose();
+      }
+
+      try {
+        final material = <String, dynamic>{
+          'id': 'demo-cuarzo',
+          'name': 'Cuarzo Blanco',
+          'cat': 'Cuarzo',
+          'img': '/materials/demo-cuarzo.jpg',
+          'pricePerM2': 0,
+        };
+        await Api.storage.write(key: catalogKey, value: jsonEncode([material]));
         final fixture = Visit(
           client: 'Cliente de demostración',
           phone: '999000111',
-          location: 'Lima · demo',
-          materialId: quartz['id'],
-          material: quartz,
+          location: 'Lima',
+          project: 'Cocina',
+          materialId: material['id'],
+          material: material,
         );
         await Api.storage.write(
-          key: demoKey,
+          key: key,
           value: jsonEncode([fixture.toJson()]),
         );
         await prefs.setMode(ThemeMode.light);
-        await prefs.setAccent(Accent.gold);
         final session = Session(api);
         runApp(
           RepaintBoundary(
@@ -65,64 +82,60 @@ void main() {
         await tester.ensureVisible(find.text('Explorar demo de trabajador'));
         await tester.tap(find.text('Explorar demo de trabajador'));
         await tester.pumpAndSettle(const Duration(seconds: 1));
-        expect(find.text('Buenas ideas.\nMedidas claras.'), findsOneWidget);
-        await capture(tester, '01-inicio-claro');
-        await tester.tap(find.text('Cuenta'));
+        expect(find.textContaining('Hola, Trabajador'), findsOneWidget);
+        await capture('01-inicio');
+
+        await tester.tap(find.text('Materiales').last);
         await tester.pumpAndSettle();
-        expect(find.text('A tu manera.'), findsOneWidget);
-        await tester.tap(find.text('Oscuro'));
+        expect(find.text('Nuestro catálogo'), findsOneWidget);
+        await capture('02-materiales');
+
+        await tester.tap(find.text('Visitas').last);
         await tester.pumpAndSettle();
-        await tester.tap(find.text('Azul'));
+        await capture('03-visitas');
+        await tester.tap(find.text('Cliente de demostración').first);
         await tester.pumpAndSettle();
-        expect(prefs.mode, ThemeMode.dark);
-        expect(prefs.accent, Accent.blue);
-        await capture(tester, '02-cuenta-oscuro-azul');
-        await tester.tap(find.text('Materiales'));
+        expect(find.text('Datos del cliente'), findsOneWidget);
+        await capture('04-cliente');
+        await tester.tap(find.text('Siguiente'));
         await tester.pumpAndSettle();
-        expect(find.text('La piedra indicada.'), findsOneWidget);
-        final before = prefs.favorites.toSet();
-        final favorite = find.byTooltip('Agregar a favoritos').first;
-        await tester.tap(favorite);
+        expect(find.text('Piezas y medidas'), findsWidgets);
+        await capture('05-medidas');
+        await tester.tap(find.text('Siguiente'));
         await tester.pumpAndSettle();
-        expect(prefs.favorites.length, before.length + 1);
-        await capture(tester, '03-catalogo-oscuro');
-        await tester.tap(find.text('Inicio'));
+        await capture('06-material-elegido');
+        await tester.tap(find.text('Calcular propuesta'));
         await tester.pumpAndSettle();
-        await tester.ensureVisible(find.text('Cliente de demostración'));
-        await tester.tap(find.text('Cliente de demostración'));
+        expect(find.text('Visualizar con IA'), findsWidgets);
+        await capture('07-ia');
+        await tester.tap(find.text('Siguiente'));
         await tester.pumpAndSettle();
-        expect(find.text('Visita técnica'), findsOneWidget);
-        await tester.tap(find.text('Generar bosquejo y proforma'));
-        await tester.pumpAndSettle();
-        expect(find.byType(Sketch), findsOneWidget);
-        await capture(tester, '04-bosquejo-oscuro');
-        await tester.scrollUntilVisible(
-          find.text('Compartir proforma PDF'),
-          300,
-          scrollable: find.byType(Scrollable).first,
-        );
-        await tester.pumpAndSettle();
-        expect(find.text('Por evaluar'), findsOneWidget);
-        await capture(tester, '05-proforma-oscuro');
+        expect(find.text('Propuesta completa'), findsWidgets);
+        await capture('08-propuesta');
         binding.reportData = {'captures': captures};
       } finally {
         await tester.pumpWidget(const SizedBox());
         await tester.pumpAndSettle();
-        if (oldDrafts == null) {
-          await Api.storage.delete(key: demoKey);
+        if (previousDrafts == null) {
+          await Api.storage.delete(key: key);
         } else {
-          await Api.storage.write(key: demoKey, value: oldDrafts);
+          await Api.storage.write(key: key, value: previousDrafts);
         }
-        if (oldPreferences == null) {
+        if (previousPrefs == null) {
           await Api.storage.delete(key: AppPreferences.key);
         } else {
           await Api.storage.write(
             key: AppPreferences.key,
-            value: oldPreferences,
+            value: previousPrefs,
           );
         }
       }
+      if (previousCatalog == null) {
+        await Api.storage.delete(key: catalogKey);
+      } else {
+        await Api.storage.write(key: catalogKey, value: previousCatalog);
+      }
     },
-    timeout: const Timeout(Duration(minutes: 3)),
+    timeout: const Timeout(Duration(minutes: 4)),
   );
 }

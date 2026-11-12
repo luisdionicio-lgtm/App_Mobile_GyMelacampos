@@ -362,6 +362,7 @@ class _EditorState extends State<VisitEditor> {
           if (step == 4)
             TextButton(
               onPressed: busy ? null : saveToAdmin,
+              style: TextButton.styleFrom(foregroundColor: Colors.white),
               child: Text(
                 repo.session.demo
                     ? 'Guardar demo'
@@ -447,7 +448,7 @@ class _EditorState extends State<VisitEditor> {
                   'Piezas y medidas',
                   subtitle: 'Registra las dimensiones de cada pieza.',
                 ),
-                heading('Medidas de las piezas'),
+                const SizedBox(height: 12),
                 const Note(
                   'Largo y ancho en metros; espesor en centímetros. Agrega cada encimera, zócalo o pared como una pieza rectangular independiente.',
                 ),
@@ -522,7 +523,6 @@ class _EditorState extends State<VisitEditor> {
                   ),
                   const SizedBox(height: 16),
                 ],
-                heading('El material'),
                 if (repo.materials.isEmpty)
                   const Note(
                     'Catálogo no disponible. Comprueba la conexión al servidor.',
@@ -653,20 +653,37 @@ class _EditorState extends State<VisitEditor> {
                   'Propuesta completa',
                   subtitle: 'Cotización, cliente y bosquejos en un solo PDF.',
                 ),
-                heading(visit.project),
-                Text('${visit.client} · ${visit.location}'),
-                const SizedBox(height: 10),
-                Text(
-                  '${visit.material?['cat']} · ${visit.material?['name']}',
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-                if (canPropose) ...[
-                  heading('Bosquejo de mediciones'),
-                  Sketch(visit),
-                  const Note(
-                    'Vista superior de piezas independientes. Revisa huecos, uniones y tolerancias antes de fabricar.',
+                const SizedBox(height: 16),
+                GmPanel(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        visit.client,
+                        style: const TextStyle(
+                          color: gmNavy,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text('${visit.project} · ${visit.location}'),
+                      if (visit.phone.isNotEmpty) Text(visit.phone),
+                      const Divider(height: 22),
+                      Text(
+                        '${visit.material?['name'] ?? 'Material por confirmar'}',
+                        style: const TextStyle(
+                          color: gmNavy,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Text(
+                        '${visit.pieces.length} pieza(s) · ${visit.area.toStringAsFixed(3)} m²',
+                      ),
+                    ],
                   ),
-                ],
+                ),
+                const SizedBox(height: 12),
                 if (canPropose)
                   Container(
                     padding: const EdgeInsets.all(22),
