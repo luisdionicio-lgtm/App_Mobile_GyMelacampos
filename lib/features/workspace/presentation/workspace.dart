@@ -181,26 +181,32 @@ class _WorkspaceState extends State<Workspace> {
       },
       child: Scaffold(
         appBar: AppBar(
-          toolbarHeight: tab == 0 ? 82 : null,
+          toolbarHeight: tab == 0 ? 96 : null,
+          backgroundColor: tab == 0 ? Colors.transparent : null,
+          elevation: 0,
           flexibleSpace: tab == 0
               ? Stack(
                   fit: StackFit.expand,
                   children: [
                     Image.asset(
-                      'assets/login-navy-marble.jpg',
+                      'assets/login-white-marble-v2.jpg',
                       fit: BoxFit.cover,
                     ),
-                    Container(color: gmNavy.withValues(alpha: .22)),
-                    const Align(
-                      alignment: Alignment.bottomCenter,
-                      child: SizedBox(
-                        height: 3,
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(colors: [gmRed, gmGold]),
+                    ClipPath(
+                      clipper: _HeaderWaveClipper(),
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          Image.asset(
+                            'assets/login-navy-marble.jpg',
+                            fit: BoxFit.cover,
                           ),
-                        ),
+                          Container(color: gmNavy.withValues(alpha: .22)),
+                        ],
                       ),
+                    ),
+                    const IgnorePointer(
+                      child: CustomPaint(painter: _HeaderWavePainter()),
                     ),
                   ],
                 )
@@ -276,6 +282,65 @@ class _WorkspaceState extends State<Workspace> {
       ),
     );
   }
+}
+
+Path _headerWaveEdge(Size size) {
+  final w = size.width;
+  final h = size.height;
+  return Path()
+    ..moveTo(0, h - 46)
+    ..cubicTo(w * .13, h - 8, w * .24, h - 4, w * .39, h - 16)
+    ..cubicTo(w * .65, h - 38, w * .85, h - 29, w, h - 5);
+}
+
+class _HeaderWaveClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) => _headerWaveEdge(size)
+    ..lineTo(size.width, 0)
+    ..lineTo(0, 0)
+    ..close();
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+}
+
+class _HeaderWavePainter extends CustomPainter {
+  const _HeaderWavePainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    final redRibbon = Path()
+      ..moveTo(0, h - 46)
+      ..cubicTo(w * .13, h - 8, w * .24, h - 4, w * .39, h - 16)
+      ..cubicTo(w * .22, h + 10, w * .09, h - 9, 0, h - 22)
+      ..close();
+    canvas.drawPath(
+      redRibbon,
+      Paint()
+        ..shader = const LinearGradient(
+          colors: [Color(0xfff10022), gmRed],
+        ).createShader(Offset.zero & size),
+    );
+
+    final goldRibbon = Path()
+      ..moveTo(w * .28, h - 9)
+      ..cubicTo(w * .51, h - 35, w * .78, h - 40, w, h - 5)
+      ..lineTo(w, h + 8)
+      ..cubicTo(w * .79, h - 32, w * .52, h - 28, w * .28, h - 9)
+      ..close();
+    canvas.drawPath(
+      goldRibbon,
+      Paint()
+        ..shader = const LinearGradient(
+          colors: [Color(0xfff9df93), gmGold, Color(0xffe8b44d)],
+        ).createShader(Offset.zero & size),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _HomeNavigationBar extends StatelessWidget {
