@@ -48,7 +48,7 @@ El APK interno optimizado está en `build/app/outputs/flutter-apk/app-release.ap
 
 El proyecto iOS usa Xcode, CocoaPods y Flutter 3.35.3. El iPhone físico debe estar enlazado con la Mac, tener el modo desarrollador activo y confiar en el perfil de desarrollo desde **Ajustes > General > VPN y gestión de dispositivos**. Xcode debe tener iniciada la cuenta Apple del equipo configurado en `ios/Runner.xcodeproj`.
 
-La app usa el mismo servidor Docker de la web. En la carpeta hermana `MELACAMPOS_WEB`, `LAN_BIND_IP` de `.env` debe ser la IP Wi-Fi actual de la Mac. Inicia los servicios con `docker compose up -d --wait`. El certificado público de esta instalación está incluido en `assets/lan-root-ca-mac.pem`; si se reemplaza el volumen de Caddy, exporta el nuevo certificado público antes de recompilar. No incluyas su clave privada.
+La app usa el mismo servidor Docker de la web. En la carpeta hermana `MELACAMPOS_WEB`, configura `LAN_HOME_HOST=MacBook-Air-de-Andy.local` y `LAN_LISTEN_IP=0.0.0.0` en `.env`. El nombre local se mantiene aunque cambie la IP Wi-Fi de la Mac. Inicia los servicios con `docker compose up -d --wait`. El certificado público de esta instalación está incluido en `assets/lan-root-ca-mac.pem`; si se reemplaza el volumen de Caddy, exporta el nuevo certificado público antes de recompilar. No incluyas su clave privada.
 
 ```sh
 cd ~/Documents/Trabajo/MELACAMPOS_MOBIL
@@ -57,10 +57,10 @@ cd ~/Documents/Trabajo/MELACAMPOS_MOBIL
 PATH="$HOME/Developer/ruby-3.4.12/bin:$PATH" SSL_CERT_FILE=/etc/ssl/cert.pem \
   ~/Developer/flutter-3.35.3/flutter/bin/flutter run --release \
   -d ID_DEL_IPHONE \
-  --dart-define=API_BASE_URL=https://IP_WIFI_DE_LA_MAC:8443
+  --dart-define=API_BASE_URL=https://MacBook-Air-de-Andy.local:8443
 ```
 
-El ID se obtiene de `flutter devices` y la IP con `ipconfig getifaddr en0` en esta Mac. La instalación permanece en el iPhone después de cerrar Flutter; para utilizar la app, mantén Docker y el iPhone en la misma red. Si cambia la IP, también puedes actualizarla desde **Configurar conexión** en la pantalla de inicio de sesión. Con una cuenta Apple gratuita, iOS permite un número limitado de apps de desarrollo instaladas simultáneamente.
+El ID se obtiene de `flutter devices`. La instalación permanece en el iPhone después de cerrar Flutter; para utilizar la app, mantén Docker y el iPhone en la misma red. El nombre local evita reconfigurar la app cuando cambia la IP. Si cambias el nombre local de la Mac, actualiza `LAN_HOME_HOST` y la URL de compilación. Con una cuenta Apple gratuita, iOS permite un número limitado de apps de desarrollo instaladas simultáneamente.
 
 ## Backend compartido y roles
 
