@@ -27,147 +27,132 @@ class HomePage extends StatelessWidget {
     final name =
         repo.session.user?['name']?.toString().split(' ').first ?? 'equipo';
     final last = repo.visits.isEmpty ? null : repo.visits.first;
-    return Stack(
+    return ListView(
+      key: const PageStorageKey('home'),
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 30),
       children: [
-        Positioned.fill(
-          child: Image.asset(
-            'assets/login-white-marble-v2.jpg',
-            fit: BoxFit.cover,
-            color: Colors.white.withValues(alpha: .82),
-            colorBlendMode: BlendMode.srcOver,
-          ),
-        ),
-        ListView(
-          key: const PageStorageKey('home'),
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 30),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 5,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: gmRed,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text.rich(
-                        TextSpan(
-                          children: [
-                            const TextSpan(
-                              text: 'Hola, ',
-                              style: TextStyle(color: gmNavy),
-                            ),
-                            TextSpan(
-                              text: name.toUpperCase(),
-                              style: const TextStyle(color: gmRed),
-                            ),
-                            const TextSpan(
-                              text: ' 👋',
-                              style: TextStyle(color: gmNavy),
-                            ),
-                          ],
-                        ),
-                        style: const TextStyle(
-                          fontSize: 25,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      const Text(
-                        '¿Qué deseas hacer hoy?',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Color(0xff58616d),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+            Container(
+              width: 5,
+              height: 48,
+              decoration: BoxDecoration(
+                color: gmRed,
+                borderRadius: BorderRadius.circular(4),
+              ),
             ),
-            const SizedBox(height: 24),
-            LayoutBuilder(
-              builder: (context, constraints) => GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 2,
-                childAspectRatio: constraints.maxWidth < 350 ? 1.15 : 1.33,
-                mainAxisSpacing: 14,
-                crossAxisSpacing: 14,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _MarbleShortcut(
-                    Icons.add,
-                    'Nueva visita',
-                    false,
-                    repo.session.canEdit ? () => onOpen(null) : null,
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        const TextSpan(
+                          text: 'Hola, ',
+                          style: TextStyle(color: gmNavy),
+                        ),
+                        TextSpan(
+                          text: name.toUpperCase(),
+                          style: const TextStyle(color: gmRed),
+                        ),
+                        const TextSpan(
+                          text: ' 👋',
+                          style: TextStyle(color: gmNavy),
+                        ),
+                      ],
+                    ),
+                    style: const TextStyle(
+                      fontSize: 25,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
-                  _MarbleShortcut(
-                    Icons.assignment_outlined,
-                    'Mis visitas',
-                    true,
-                    onVisits,
-                  ),
-                  _MarbleShortcut(
-                    Icons.show_chart,
-                    'Seguimiento',
-                    true,
-                    onTracking,
-                  ),
-                  _MarbleShortcut(
-                    Icons.layers_outlined,
-                    'Materiales',
-                    false,
-                    onMaterials,
+                  const SizedBox(height: 2),
+                  const Text(
+                    '¿Qué deseas hacer hoy?',
+                    style: TextStyle(fontSize: 16, color: Color(0xff58616d)),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 28),
-            Row(
-              children: [
-                Container(
-                  width: 5,
-                  height: 33,
-                  decoration: BoxDecoration(
-                    color: gmRed,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                const Text(
-                  'Último trabajo',
-                  style: TextStyle(
-                    fontSize: 23,
-                    fontWeight: FontWeight.w800,
-                    color: gmNavy,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            _LastWork(
-              last,
-              onTap: last == null ? onVisits : () => onOpen(last),
-              serverBase: repo.session.api.endpoint,
-            ),
-            if (repo.session.demo)
-              const Padding(
-                padding: EdgeInsets.only(top: 18),
-                child: Note(
-                  'Demo local: los datos de ejemplo no se envían a la web.',
-                  icon: Icons.science_outlined,
-                ),
-              ),
           ],
         ),
+        const SizedBox(height: 24),
+        LayoutBuilder(
+          builder: (context, constraints) => GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 2,
+            childAspectRatio: constraints.maxWidth < 350 ? 1.15 : 1.33,
+            mainAxisSpacing: 14,
+            crossAxisSpacing: 14,
+            children: [
+              _MarbleShortcut(
+                Icons.add,
+                'Nueva visita',
+                false,
+                repo.session.canEdit ? () => onOpen(null) : null,
+              ),
+              _MarbleShortcut(
+                Icons.assignment_outlined,
+                'Mis visitas',
+                true,
+                onVisits,
+              ),
+              _MarbleShortcut(
+                Icons.show_chart,
+                'Seguimiento',
+                true,
+                onTracking,
+              ),
+              _MarbleShortcut(
+                Icons.layers_outlined,
+                'Materiales',
+                false,
+                onMaterials,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 28),
+        Row(
+          children: [
+            Container(
+              width: 5,
+              height: 33,
+              decoration: BoxDecoration(
+                color: gmRed,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Último trabajo',
+              style: TextStyle(
+                fontSize: 23,
+                fontWeight: FontWeight.w800,
+                color: gmNavy,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        _LastWork(
+          last,
+          onTap: last == null ? onVisits : () => onOpen(last),
+          serverBase: repo.session.api.endpoint,
+        ),
+        if (repo.session.demo)
+          const Padding(
+            padding: EdgeInsets.only(top: 18),
+            child: Note(
+              'Demo local: los datos de ejemplo no se envían a la web.',
+              icon: Icons.science_outlined,
+            ),
+          ),
       ],
     );
   }

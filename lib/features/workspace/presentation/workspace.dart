@@ -177,135 +177,150 @@ class _WorkspaceState extends State<Workspace> {
       onPopInvokedWithResult: (didPop, result) {
         if (!didPop) select(0);
       },
-      child: Scaffold(
-        appBar: AppBar(
-          toolbarHeight: tab == 0 ? 96 : null,
-          backgroundColor: tab == 0 ? Colors.transparent : null,
-          elevation: 0,
-          flexibleSpace: tab == 0
-              ? Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Image.asset(
-                      'assets/login-white-marble-v2.jpg',
-                      fit: BoxFit.cover,
-                    ),
-                    ClipPath(
-                      clipper: _HeaderWaveClipper(),
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          Image.asset(
-                            'assets/login-navy-marble.jpg',
-                            fit: BoxFit.cover,
-                          ),
-                          Container(color: gmNavy.withValues(alpha: .22)),
-                        ],
-                      ),
-                    ),
-                    const IgnorePointer(
-                      child: CustomPaint(painter: _HeaderWavePainter()),
-                    ),
-                  ],
-                )
-              : null,
-          title: tab == 0
-              ? const Brand(onNavy: true)
-              : Text(
-                  const ['Inicio', 'Mis visitas', 'Materiales', 'Cuenta'][tab],
-                ),
-          actions: [
-            ListenableBuilder(
-              listenable: monitor,
-              builder: (context, _) {
-                final state = monitor.state;
-                final connected = state == ServerState.online;
-                final checking = state == ServerState.checking;
-                return IconButton(
-                  tooltip: widget.session.demo
-                      ? 'Actualizar datos de la demo'
-                      : checking
-                      ? 'Comprobando conexión con la web'
-                      : connected
-                      ? 'Conectado con la web G&M. Toca para actualizar'
-                      : 'Sin conexión con la web. Toca para reintentar',
-                  onPressed: loading
-                      ? null
-                      : () async {
-                          await monitor.check();
-                          await refresh();
-                        },
-                  icon: Icon(
-                    widget.session.demo
-                        ? Icons.sync
-                        : checking
-                        ? Icons.cloud_sync_outlined
-                        : connected
-                        ? Icons.cloud_done_rounded
-                        : Icons.cloud_off_rounded,
-                    color: widget.session.demo
-                        ? Colors.white
-                        : checking
-                        ? const Color(0xffefc967)
-                        : connected
-                        ? const Color(0xff51de99)
-                        : const Color(0xffff777b),
-                  ),
-                );
-              },
+      child: Stack(
+        children: [
+          if (tab == 0)
+            Positioned.fill(
+              child: Image.asset(
+                'assets/login-white-marble-v2.jpg',
+                fit: BoxFit.cover,
+                color: Colors.white.withValues(alpha: .82),
+                colorBlendMode: BlendMode.srcOver,
+              ),
             ),
-          ],
-        ),
-        body: SafeArea(
-          bottom: false,
-          child: expanded
-              ? Row(
-                  children: [
-                    NavigationRail(
-                      selectedIndex: tab,
-                      onDestinationSelected: select,
-                      labelType: NavigationRailLabelType.all,
-                      destinations: const [
-                        NavigationRailDestination(
-                          icon: Icon(Icons.home_outlined),
-                          label: Text('Inicio'),
+          Scaffold(
+            backgroundColor: tab == 0 ? Colors.transparent : null,
+            appBar: AppBar(
+              toolbarHeight: tab == 0 ? 96 : null,
+              backgroundColor: tab == 0 ? Colors.transparent : null,
+              elevation: 0,
+              flexibleSpace: tab == 0
+                  ? Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        ClipPath(
+                          clipper: _HeaderWaveClipper(),
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              Image.asset(
+                                'assets/login-navy-marble.jpg',
+                                fit: BoxFit.cover,
+                              ),
+                              Container(color: gmNavy.withValues(alpha: .22)),
+                            ],
+                          ),
                         ),
-                        NavigationRailDestination(
-                          icon: Icon(Icons.assignment_outlined),
-                          label: Text('Visitas'),
-                        ),
-                        NavigationRailDestination(
-                          icon: Icon(Icons.layers_outlined),
-                          label: Text('Materiales'),
-                        ),
-                        NavigationRailDestination(
-                          icon: Icon(Icons.person_outline),
-                          label: Text('Cuenta'),
+                        const IgnorePointer(
+                          child: CustomPaint(painter: _HeaderWavePainter()),
                         ),
                       ],
+                    )
+                  : null,
+              title: tab == 0
+                  ? const Brand(onNavy: true)
+                  : Text(
+                      const [
+                        'Inicio',
+                        'Mis visitas',
+                        'Materiales',
+                        'Cuenta',
+                      ][tab],
                     ),
-                    Expanded(child: content),
-                  ],
-                )
-              : content,
-        ),
-        floatingActionButton: tab == 1 && widget.session.canEdit
-            ? FloatingActionButton.extended(
-                onPressed: () => open(null),
-                icon: const Icon(Icons.add),
-                label: const Text('Nueva visita'),
-              )
-            : null,
-        bottomNavigationBar: expanded
-            ? null
-            : tab == 0
-            ? _HomeNavigationBar(selected: tab, onSelect: select)
-            : NavigationBar(
-                animationDuration: Duration(milliseconds: reduce ? 0 : 180),
-                selectedIndex: tab,
-                onDestinationSelected: select,
-                destinations: destinations,
-              ),
+              actions: [
+                ListenableBuilder(
+                  listenable: monitor,
+                  builder: (context, _) {
+                    final state = monitor.state;
+                    final connected = state == ServerState.online;
+                    final checking = state == ServerState.checking;
+                    return IconButton(
+                      tooltip: widget.session.demo
+                          ? 'Actualizar datos de la demo'
+                          : checking
+                          ? 'Comprobando conexión con la web'
+                          : connected
+                          ? 'Conectado con la web G&M. Toca para actualizar'
+                          : 'Sin conexión con la web. Toca para reintentar',
+                      onPressed: loading
+                          ? null
+                          : () async {
+                              await monitor.check();
+                              await refresh();
+                            },
+                      icon: Icon(
+                        widget.session.demo
+                            ? Icons.sync
+                            : checking
+                            ? Icons.cloud_sync_outlined
+                            : connected
+                            ? Icons.cloud_done_rounded
+                            : Icons.cloud_off_rounded,
+                        color: widget.session.demo
+                            ? Colors.white
+                            : checking
+                            ? const Color(0xffefc967)
+                            : connected
+                            ? const Color(0xff51de99)
+                            : const Color(0xffff777b),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+            body: SafeArea(
+              bottom: false,
+              child: expanded
+                  ? Row(
+                      children: [
+                        NavigationRail(
+                          selectedIndex: tab,
+                          onDestinationSelected: select,
+                          labelType: NavigationRailLabelType.all,
+                          destinations: const [
+                            NavigationRailDestination(
+                              icon: Icon(Icons.home_outlined),
+                              label: Text('Inicio'),
+                            ),
+                            NavigationRailDestination(
+                              icon: Icon(Icons.assignment_outlined),
+                              label: Text('Visitas'),
+                            ),
+                            NavigationRailDestination(
+                              icon: Icon(Icons.layers_outlined),
+                              label: Text('Materiales'),
+                            ),
+                            NavigationRailDestination(
+                              icon: Icon(Icons.person_outline),
+                              label: Text('Cuenta'),
+                            ),
+                          ],
+                        ),
+                        Expanded(child: content),
+                      ],
+                    )
+                  : content,
+            ),
+            floatingActionButton: tab == 1 && widget.session.canEdit
+                ? FloatingActionButton.extended(
+                    onPressed: () => open(null),
+                    icon: const Icon(Icons.add),
+                    label: const Text('Nueva visita'),
+                  )
+                : null,
+            bottomNavigationBar: expanded
+                ? null
+                : tab == 0
+                ? _HomeNavigationBar(selected: tab, onSelect: select)
+                : NavigationBar(
+                    animationDuration: Duration(milliseconds: reduce ? 0 : 180),
+                    selectedIndex: tab,
+                    onDestinationSelected: select,
+                    destinations: destinations,
+                  ),
+          ),
+        ],
       ),
     );
   }
