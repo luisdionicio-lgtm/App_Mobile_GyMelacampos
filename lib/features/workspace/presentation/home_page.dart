@@ -350,7 +350,9 @@ class _LastWork extends StatelessWidget {
                           Text(
                             visit?.client.isNotEmpty == true
                                 ? visit!.client
-                                : 'Sin trabajos registrados',
+                                : visit == null
+                                ? 'Sin trabajos registrados'
+                                : 'Visita sin nombre',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
