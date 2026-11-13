@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/brand_ui.dart';
+import '../../../core/inner_ui.dart';
 import '../../../core/preferences.dart';
 import '../../../core/theme.dart';
 import '../../visits/data/visit_repository.dart';
@@ -498,11 +499,10 @@ class MaterialPage extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
-    final prefs = PreferencesScope.of(context),
-        scheme = Theme.of(context).colorScheme;
+    final prefs = PreferencesScope.of(context);
     return Scaffold(
-      appBar: AppBar(
-        title: Text(material['cat']),
+      appBar: gmInnerAppBar(
+        title: material['cat']?.toString() ?? 'Material',
         actions: [
           IconButton(
             tooltip: 'Alternar favorito',
@@ -515,69 +515,120 @@ class MaterialPage extends StatelessWidget {
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(22),
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(18),
-            child: Hero(
-              tag: 'material-${material['id']}',
-              child: Image.network(
-                '${repo.session.api.endpoint}${material['img']}',
-                height: 280,
-                fit: BoxFit.cover,
-                errorBuilder: (_, e, s) => const SizedBox(
-                  height: 160,
-                  child: Center(child: Icon(Icons.layers_outlined, size: 40)),
+      body: GmInnerBackground(
+        child: ListView(
+          padding: const EdgeInsets.all(22),
+          children: [
+            Container(
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: gmGold, width: 2),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x3306233c),
+                    blurRadius: 16,
+                    offset: Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Hero(
+                tag: 'material-${material['id']}',
+                child: Image.network(
+                  '${repo.session.api.endpoint}${material['img']}',
+                  height: 280,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, e, s) => const SizedBox(
+                    height: 160,
+                    child: Center(child: Icon(Icons.layers_outlined, size: 40)),
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            material['name'],
-            style: Theme.of(context).textTheme.headlineLarge,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            material['desc'] ?? '',
-            style: TextStyle(height: 1.65, color: scheme.onSurfaceVariant),
-          ),
-          const SizedBox(height: 24),
-          for (final entry in [
-            ('Categoría', material['cat']),
-            ('Colección', material['col']),
-            ('Acabado', material['finish']),
-            ('Espesor', material['thick']),
-          ])
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(entry.$1),
-              trailing: Text(
-                entry.$2 ?? 'Por confirmar',
-                style: const TextStyle(fontWeight: FontWeight.w600),
+            const SizedBox(height: 24),
+            GmInnerHeading(
+              eyebrow: material['cat']?.toString() ?? 'Colección G&M',
+              title: material['name']?.toString() ?? 'Material',
+              subtitle: 'Conoce sus características antes de elegirlo.',
+              icon: Icons.layers_outlined,
+            ),
+            const SizedBox(height: 18),
+            GmInnerCard(
+              child: Text(
+                material['desc']?.toString() ?? '',
+                style: const TextStyle(
+                  height: 1.55,
+                  color: gmNavy,
+                  fontSize: 15,
+                ),
               ),
             ),
-          const Divider(height: 32),
-          Text(
-            ((material['pricePerM2'] as num?)?.toDouble() ?? 0) > 0
-                ? 'S/ ${material['pricePerM2']} por m²'
-                : 'Tarifa por evaluar',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const Note(
-            'La cotización utiliza las tarifas configuradas en la web. El precio final requiere revisión administrativa.',
-          ),
-          if (repo.session.canEdit)
-            GmAction(
-              onPressed: () {
-                Navigator.pop(context);
-                onUse(Visit(materialId: material['id'], material: material));
-              },
-              icon: Icons.check_circle_outline,
-              label: 'Seleccionar para una visita',
+            const SizedBox(height: 16),
+            GmInnerCard(
+              child: Column(
+                children: [
+                  for (final entry in [
+                    ('Categoría', material['cat']),
+                    ('Colección', material['col']),
+                    ('Acabado', material['finish']),
+                    ('Espesor', material['thick']),
+                  ])
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(
+                        entry.$1,
+                        style: const TextStyle(
+                          color: Color(0xff53606b),
+                          fontSize: 13,
+                        ),
+                      ),
+                      trailing: Text(
+                        entry.$2?.toString() ?? 'Por confirmar',
+                        style: const TextStyle(
+                          color: gmNavy,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
-        ],
+            const SizedBox(height: 16),
+            GmInnerCard(
+              child: Row(
+                children: [
+                  const Icon(Icons.payments_outlined, color: gmGold),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      ((material['pricePerM2'] as num?)?.toDouble() ?? 0) > 0
+                          ? 'S/ ${material['pricePerM2']} por m²'
+                          : 'Tarifa por evaluar',
+                      style: const TextStyle(
+                        fontFamily: 'Playfair Display',
+                        color: gmNavy,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 21,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Note(
+              'La cotización utiliza las tarifas configuradas en la web. El precio final requiere revisión administrativa.',
+            ),
+            if (repo.session.canEdit)
+              GmAction(
+                onPressed: () {
+                  Navigator.pop(context);
+                  onUse(Visit(materialId: material['id'], material: material));
+                },
+                icon: Icons.check_circle_outline,
+                label: 'Seleccionar para una visita',
+              ),
+          ],
+        ),
       ),
     );
   }

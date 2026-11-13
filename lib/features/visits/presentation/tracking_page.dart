@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/brand_ui.dart';
+import '../../../core/inner_ui.dart';
 import '../../workspace/presentation/widgets.dart';
 import '../data/visit_repository.dart';
 import '../domain/visit.dart';
@@ -32,56 +33,68 @@ class _TrackingPageState extends State<TrackingPage> {
             .toList()
           ..sort();
     return Scaffold(
-      appBar: AppBar(title: const Text('Seguimiento')),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(18, 20, 18, 28),
-        children: [
-          const GmPageTitle(
-            'Mis trabajos',
-            subtitle: 'Estado actualizado por administración',
-          ),
-          const SizedBox(height: 18),
-          TextField(
-            onChanged: (value) => setState(() => search = value),
-            decoration: const InputDecoration(
-              hintText: 'Buscar cliente o material',
-              prefixIcon: Icon(Icons.search),
-            ),
-          ),
-          const SizedBox(height: 12),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                for (final status in ['Todos', ...statuses])
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      label: Text(status),
-                      selected: filter == status,
-                      onSelected: (_) => setState(() => filter = status),
+      appBar: gmInnerAppBar(title: 'Seguimiento'),
+      body: GmInnerBackground(
+        child: Theme(
+          data: Theme.of(
+            context,
+          ).copyWith(inputDecorationTheme: gmInnerInputTheme()),
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(18, 20, 18, 28),
+            children: [
+              const GmInnerHeading(
+                eyebrow: 'Tus proyectos',
+                title: 'Mis',
+                accent: 'trabajos',
+                subtitle: 'Consulta cada avance que registra administración.',
+                icon: Icons.timeline_rounded,
+              ),
+              const SizedBox(height: 18),
+              TextField(
+                onChanged: (value) => setState(() => search = value),
+                decoration: const InputDecoration(
+                  hintText: 'Buscar cliente o material',
+                  prefixIcon: Icon(Icons.search),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    for (final status in ['Todos', ...statuses])
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ChoiceChip(
+                          label: Text(status),
+                          selected: filter == status,
+                          onSelected: (_) => setState(() => filter = status),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 18),
+              if (visits.isEmpty)
+                const GmInnerCard(
+                  child: Text(
+                    'No hay visitas enviadas para este filtro. Los borradores siguen en Mis visitas.',
+                  ),
+                ),
+              for (final visit in visits)
+                VisitTile(
+                  visit,
+                  serverBase: widget.repo.session.api.endpoint,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => TrackingDetailPage(visit),
                     ),
                   ),
-              ],
-            ),
+                ),
+            ],
           ),
-          const SizedBox(height: 18),
-          if (visits.isEmpty)
-            const GmPanel(
-              child: Text(
-                'No hay visitas enviadas para este filtro. Los borradores siguen en Mis visitas.',
-              ),
-            ),
-          for (final visit in visits)
-            VisitTile(
-              visit,
-              serverBase: widget.repo.session.api.endpoint,
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => TrackingDetailPage(visit)),
-              ),
-            ),
-        ],
+        ),
       ),
     );
   }
@@ -93,81 +106,95 @@ class TrackingDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Detalle del trabajo')),
-    body: ListView(
-      padding: const EdgeInsets.fromLTRB(18, 22, 18, 30),
-      children: [
-        GmPanel(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              GmPageTitle(
-                visit.client.isEmpty ? 'Cliente sin nombre' : visit.client,
-                subtitle: visit.project,
-              ),
-              const SizedBox(height: 10),
-              GmStatus(visit.status),
-            ],
-          ),
-        ),
-        const SizedBox(height: 18),
-        GmPanel(
-          child: Column(
-            children: [
-              _fact(
-                Icons.layers_outlined,
-                'Material',
-                visit.material?['name']?.toString() ?? 'Sin material',
-              ),
-              const Divider(height: 22),
-              _fact(
-                Icons.straighten,
-                'Área medida',
-                '${visit.area.toStringAsFixed(3)} m²',
-              ),
-              const Divider(height: 22),
-              _fact(Icons.location_on_outlined, 'Ubicación', visit.location),
-              if (visit.phone.isNotEmpty) ...[
-                const Divider(height: 22),
-                _fact(Icons.phone_outlined, 'Teléfono', visit.phone),
+    appBar: gmInnerAppBar(title: 'Detalle del trabajo'),
+    body: GmInnerBackground(
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(18, 22, 18, 30),
+        children: [
+          GmInnerCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                GmInnerHeading(
+                  eyebrow: 'Visita técnica',
+                  title: visit.client.isEmpty
+                      ? 'Cliente sin nombre'
+                      : visit.client,
+                  subtitle: visit.project,
+                  icon: Icons.person_outline,
+                ),
+                const SizedBox(height: 10),
+                GmStatus(visit.status),
               ],
-            ],
+            ),
           ),
-        ),
-        const SizedBox(height: 22),
-        const GmPageTitle('Estado de la visita'),
-        const SizedBox(height: 10),
-        GmPanel(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.verified_outlined, color: gmGold),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      visit.status,
-                      style: const TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                  ),
+          const SizedBox(height: 18),
+          GmInnerCard(
+            child: Column(
+              children: [
+                _fact(
+                  Icons.layers_outlined,
+                  'Material',
+                  visit.material?['name']?.toString() ?? 'Sin material',
+                ),
+                const Divider(height: 22),
+                _fact(
+                  Icons.straighten,
+                  'Área medida',
+                  '${visit.area.toStringAsFixed(3)} m²',
+                ),
+                const Divider(height: 22),
+                _fact(Icons.location_on_outlined, 'Ubicación', visit.location),
+                if (visit.phone.isNotEmpty) ...[
+                  const Divider(height: 22),
+                  _fact(Icons.phone_outlined, 'Teléfono', visit.phone),
                 ],
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'El administrador actualiza la revisión de esta visita desde la web. Las etapas de fabricación e instalación aparecerán cuando estén vinculadas a este trabajo.',
-                style: TextStyle(color: Color(0xff53606b), height: 1.4),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        if (visit.notes.isNotEmpty) ...[
           const SizedBox(height: 22),
-          const GmPageTitle('Observaciones'),
+          const GmInnerHeading(
+            eyebrow: 'Seguimiento',
+            title: 'Estado de la visita',
+            icon: Icons.route_outlined,
+          ),
           const SizedBox(height: 10),
-          GmPanel(child: Text(visit.notes)),
+          GmInnerCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.verified_outlined, color: gmGold),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        visit.status,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'El administrador actualiza la revisión de esta visita desde la web. Las etapas de fabricación e instalación aparecerán cuando estén vinculadas a este trabajo.',
+                  style: TextStyle(color: Color(0xff53606b), height: 1.4),
+                ),
+              ],
+            ),
+          ),
+          if (visit.notes.isNotEmpty) ...[
+            const SizedBox(height: 22),
+            const GmInnerHeading(
+              eyebrow: 'Notas',
+              title: 'Observaciones',
+              icon: Icons.notes_outlined,
+            ),
+            const SizedBox(height: 10),
+            GmInnerCard(child: Text(visit.notes)),
+          ],
         ],
-      ],
+      ),
     ),
   );
 
