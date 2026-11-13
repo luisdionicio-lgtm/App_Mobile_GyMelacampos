@@ -6,13 +6,76 @@ import '../../visits/domain/visit.dart';
 class ConnectionStrip extends StatelessWidget {
   final ConnectionMonitor monitor;
   final bool demo;
-  const ConnectionStrip(this.monitor, {super.key, this.demo = false});
+  final bool prominent;
+  const ConnectionStrip(
+    this.monitor, {
+    super.key,
+    this.demo = false,
+    this.prominent = false,
+  });
   @override
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: monitor,
     builder: (c, _) {
       final scheme = Theme.of(c).colorScheme;
       final ready = monitor.state == ServerState.online;
+      if (prominent) {
+        return Semantics(
+          liveRegion: true,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
+            child: Material(
+              color: ready ? const Color(0xffe4f5e9) : scheme.errorContainer,
+              borderRadius: BorderRadius.circular(28),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: monitor.check,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        ready
+                            ? Icons.cloud_done_outlined
+                            : Icons.cloud_off_outlined,
+                        color: ready
+                            ? const Color(0xff007b4d)
+                            : scheme.onErrorContainer,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          monitor.state == ServerState.checking
+                              ? 'Comprobando conexión…'
+                              : ready
+                              ? 'Conectado con la web G&M'
+                              : 'Sin conexión · tus borradores están guardados',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: ready
+                                ? const Color(0xff073d2d)
+                                : scheme.onErrorContainer,
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        ready ? Icons.check_circle : Icons.refresh,
+                        color: ready
+                            ? const Color(0xff009962)
+                            : scheme.onErrorContainer,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      }
       return Semantics(
         liveRegion: true,
         child: Material(

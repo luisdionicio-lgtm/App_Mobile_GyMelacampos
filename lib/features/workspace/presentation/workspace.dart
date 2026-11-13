@@ -5,6 +5,7 @@ import '../../../core/api.dart';
 import '../../../core/connection.dart';
 import '../../../core/preferences.dart';
 import '../../../core/theme.dart';
+import '../../../core/brand_ui.dart';
 import '../../catalog/presentation/catalog_page.dart';
 import '../../settings/presentation/settings_page.dart';
 import '../../visits/data/visit_repository.dart';
@@ -134,7 +135,7 @@ class _WorkspaceState extends State<Workspace> {
     ];
     final content = Column(
       children: [
-        if (!widget.session.demo) ConnectionStrip(monitor),
+        if (!widget.session.demo) ConnectionStrip(monitor, prominent: tab == 0),
         if (loading) const LinearProgressIndicator(minHeight: 2),
         Expanded(
           child: RefreshIndicator(
@@ -180,6 +181,30 @@ class _WorkspaceState extends State<Workspace> {
       },
       child: Scaffold(
         appBar: AppBar(
+          toolbarHeight: tab == 0 ? 82 : null,
+          flexibleSpace: tab == 0
+              ? Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Image.asset(
+                      'assets/login-navy-marble.jpg',
+                      fit: BoxFit.cover,
+                    ),
+                    Container(color: gmNavy.withValues(alpha: .22)),
+                    const Align(
+                      alignment: Alignment.bottomCenter,
+                      child: SizedBox(
+                        height: 3,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(colors: [gmRed, gmGold]),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              : null,
           title: tab == 0
               ? const Brand(onNavy: true)
               : Text(
@@ -240,6 +265,8 @@ class _WorkspaceState extends State<Workspace> {
             : null,
         bottomNavigationBar: expanded
             ? null
+            : tab == 0
+            ? _HomeNavigationBar(selected: tab, onSelect: select)
             : NavigationBar(
                 animationDuration: Duration(milliseconds: reduce ? 0 : 180),
                 selectedIndex: tab,
@@ -249,6 +276,67 @@ class _WorkspaceState extends State<Workspace> {
       ),
     );
   }
+}
+
+class _HomeNavigationBar extends StatelessWidget {
+  final int selected;
+  final ValueChanged<int> onSelect;
+  const _HomeNavigationBar({required this.selected, required this.onSelect});
+
+  @override
+  Widget build(BuildContext context) => Container(
+    decoration: const BoxDecoration(
+      color: gmNavy,
+      borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+      boxShadow: [BoxShadow(color: Color(0x55000000), blurRadius: 16)],
+    ),
+    child: SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 5),
+        child: Row(
+          children: List.generate(4, (i) {
+            const icons = [
+              Icons.home,
+              Icons.assignment_outlined,
+              Icons.layers_outlined,
+              Icons.person_outline,
+            ];
+            const labels = ['Inicio', 'Visitas', 'Materiales', 'Cuenta'];
+            final active = selected == i;
+            return Expanded(
+              child: Material(
+                color: active ? gmRed : Colors.transparent,
+                borderRadius: BorderRadius.circular(20),
+                child: InkWell(
+                  onTap: () => onSelect(i),
+                  borderRadius: BorderRadius.circular(20),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 7),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(icons[i], color: Colors.white, size: 25),
+                        const SizedBox(height: 3),
+                        Text(
+                          labels[i],
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
+      ),
+    ),
+  );
 }
 
 class KeepAlivePage extends StatefulWidget {
