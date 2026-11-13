@@ -161,116 +161,121 @@ class _CatalogState extends State<CatalogPage> {
   Widget tile(Map<String, dynamic> material, AppPreferences prefs) {
     final favorite = prefs.favorites.contains(material['id']);
     return Material(
-      color: gmNavy,
+      color: gmGold,
       borderRadius: BorderRadius.circular(22),
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) =>
-                MaterialPage(material, repo: widget.repo, onUse: widget.onUse),
-          ),
-        ),
-        child: Container(
-          foregroundDecoration: BoxDecoration(
-            border: Border.all(color: gmGold, width: 2),
-            borderRadius: BorderRadius.circular(22),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Hero(
-                      tag: 'material-${material['id']}',
-                      child: Image.network(
-                        '${widget.repo.session.api.endpoint}${material['img']}',
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, e, s) => const Center(
-                          child: Icon(Icons.layers_outlined, color: gmGold),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      top: 9,
-                      right: 9,
-                      child: IconButton.filled(
-                        style: IconButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: favorite ? gmRed : gmNavy,
-                        ),
-                        tooltip: favorite
-                            ? 'Quitar de favoritos'
-                            : 'Agregar a favoritos',
-                        onPressed: () => prefs.toggleFavorite(material['id']),
-                        icon: Icon(
-                          favorite ? Icons.favorite : Icons.favorite_border,
-                          size: 20,
-                        ),
-                      ),
-                    ),
-                  ],
+      child: Padding(
+        padding: const EdgeInsets.all(2),
+        child: Material(
+          color: gmNavy,
+          borderRadius: BorderRadius.circular(20),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => MaterialPage(
+                  material,
+                  repo: widget.repo,
+                  onUse: widget.onUse,
                 ),
               ),
-              Container(
-                height: 64,
-                decoration: const BoxDecoration(
-                  border: Border(top: BorderSide(color: gmGold, width: 1.2)),
-                  image: DecorationImage(
-                    image: AssetImage('assets/login-navy-marble.jpg'),
-                    fit: BoxFit.cover,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Hero(
+                        tag: 'material-${material['id']}',
+                        child: Image.network(
+                          '${widget.repo.session.api.endpoint}${material['img']}',
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, e, s) => const Center(
+                            child: Icon(Icons.layers_outlined, color: gmGold),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        top: 9,
+                        right: 9,
+                        child: IconButton.filled(
+                          style: IconButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: favorite ? gmRed : gmNavy,
+                          ),
+                          tooltip: favorite
+                              ? 'Quitar de favoritos'
+                              : 'Agregar a favoritos',
+                          onPressed: () => prefs.toggleFavorite(material['id']),
+                          icon: Icon(
+                            favorite ? Icons.favorite : Icons.favorite_border,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: CustomPaint(painter: _CatalogCorner()),
+                Container(
+                  height: 64,
+                  decoration: const BoxDecoration(
+                    border: Border(top: BorderSide(color: gmGold, width: 1.2)),
+                    image: DecorationImage(
+                      image: AssetImage('assets/login-navy-marble.jpg'),
+                      fit: BoxFit.cover,
                     ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 9, 18, 7),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            material['name'],
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 3),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.layers_outlined,
-                                color: Colors.white,
-                                size: 15,
-                              ),
-                              const SizedBox(width: 5),
-                              Text(
-                                material['cat'],
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                  ),
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: CustomPaint(painter: _CatalogCorner()),
                       ),
-                    ),
-                  ],
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 9, 18, 7),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              material['name'],
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.layers_outlined,
+                                  color: Colors.white,
+                                  size: 15,
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  material['cat'],
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
