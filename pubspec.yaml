@@ -34,6 +34,8 @@ flutter:
     - assets/login-black-marble-v2.jpg
     - assets/login-navy-marble.jpg
     - assets/login-white-marble-v2.jpg
+    - assets/home-white-gold-marble.png
+    - assets/home-black-gold-marble.png
     - assets/quote-footer.png
     - assets/quote-header.png
     - assets/stone.png
