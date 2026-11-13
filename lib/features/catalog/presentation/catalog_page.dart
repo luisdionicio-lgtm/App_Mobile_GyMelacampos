@@ -190,12 +190,22 @@ class _CatalogState extends State<CatalogPage> {
                     children: [
                       Hero(
                         tag: 'material-${material['id']}',
-                        child: Image.network(
-                          '${widget.repo.session.api.endpoint}${material['img']}',
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, e, s) => const Center(
-                            child: Icon(Icons.layers_outlined, color: gmGold),
+                        child: ClipRect(
+                          child: Transform.scale(
+                            // Algunas fotos de cuarzo incluyen un marco blanco
+                            // dentro del propio archivo del catálogo.
+                            scale: material['cat'] == 'Cuarzo' ? 1.12 : 1,
+                            child: Image.network(
+                              '${widget.repo.session.api.endpoint}${material['img']}',
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, e, s) => const Center(
+                                child: Icon(
+                                  Icons.layers_outlined,
+                                  color: gmGold,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ),
