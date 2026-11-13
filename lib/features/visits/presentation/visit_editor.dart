@@ -22,6 +22,134 @@ class VisitEditor extends StatefulWidget {
   State<VisitEditor> createState() => _EditorState();
 }
 
+AppBar _visitBrandAppBar({required VoidCallback onBack}) => AppBar(
+  toolbarHeight: 112,
+  backgroundColor: Colors.transparent,
+  elevation: 0,
+  leading: IconButton(
+    tooltip: 'Volver',
+    onPressed: onBack,
+    icon: const Icon(Icons.arrow_back, color: Colors.white),
+  ),
+  title: const Brand(onNavy: true),
+  flexibleSpace: Stack(
+    fit: StackFit.expand,
+    children: [
+      Image.asset('assets/home-white-gold-marble.png', fit: BoxFit.cover),
+      ClipPath(
+        clipper: _VisitHeaderClipper(),
+        child: Image.asset('assets/login-navy-marble.jpg', fit: BoxFit.cover),
+      ),
+      const IgnorePointer(child: CustomPaint(painter: _VisitHeaderPainter())),
+    ],
+  ),
+);
+
+Path _visitHeaderEdge(Size size) => Path()
+  ..moveTo(0, size.height - 38)
+  ..cubicTo(
+    size.width * .22,
+    size.height + 3,
+    size.width * .35,
+    size.height - 28,
+    size.width * .58,
+    size.height - 32,
+  )
+  ..cubicTo(
+    size.width * .79,
+    size.height - 38,
+    size.width * .91,
+    size.height - 17,
+    size.width,
+    size.height - 8,
+  );
+
+class _VisitHeaderClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) => _visitHeaderEdge(size)
+    ..lineTo(size.width, 0)
+    ..lineTo(0, 0)
+    ..close();
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+}
+
+class _VisitHeaderPainter extends CustomPainter {
+  const _VisitHeaderPainter();
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    final red = Path()
+      ..moveTo(0, h - 38)
+      ..cubicTo(w * .22, h + 3, w * .35, h - 28, w * .58, h - 32)
+      ..cubicTo(w * .35, h - 18, w * .18, h + 14, 0, h - 15)
+      ..close();
+    canvas.drawPath(red, Paint()..color = gmRed);
+    final gold = Path()
+      ..moveTo(w * .34, h - 22)
+      ..cubicTo(w * .57, h - 45, w * .82, h - 38, w, h - 8)
+      ..lineTo(w, h + 4)
+      ..cubicTo(w * .8, h - 32, w * .56, h - 36, w * .34, h - 22)
+      ..close();
+    canvas.drawPath(
+      gold,
+      Paint()
+        ..shader = const LinearGradient(
+          colors: [Color(0xfff6d27c), gmGold, Color(0xfff3c459)],
+        ).createShader(Offset.zero & size),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _VisitNextButton extends StatelessWidget {
+  const _VisitNextButton({required this.onPressed});
+  final VoidCallback? onPressed;
+  @override
+  Widget build(BuildContext context) => Opacity(
+    opacity: onPressed == null ? .55 : 1,
+    child: InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(22),
+      child: Container(
+        height: 57,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xffa90018), gmRed, Color(0xff9d0016)],
+          ),
+          border: Border.all(color: gmGold, width: 2),
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x4406233c),
+              blurRadius: 12,
+              offset: Offset(0, 5),
+            ),
+          ],
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 25),
+            SizedBox(width: 14),
+            Text(
+              'Siguiente',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
 class _EditorState extends State<VisitEditor> {
   late Visit visit;
   final form = GlobalKey<FormState>();
@@ -243,14 +371,25 @@ class _EditorState extends State<VisitEditor> {
     TextInputType? keyboard,
     int maxLines = 1,
     bool required = true,
+    String? hint,
+    bool contactStyle = false,
   }) => Padding(
-    padding: const EdgeInsets.only(bottom: 16),
+    padding: EdgeInsets.only(bottom: contactStyle ? 13 : 16),
     child: TextFormField(
       controller: c,
       readOnly: visit.synced,
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: icon == null ? null : Icon(icon, color: gmGold),
+        hintText: hint,
+        floatingLabelBehavior: contactStyle
+            ? FloatingLabelBehavior.always
+            : null,
+        contentPadding: contactStyle
+            ? const EdgeInsets.symmetric(horizontal: 18, vertical: 22)
+            : null,
+        prefixIcon: icon == null
+            ? null
+            : Icon(icon, color: gmGold, size: contactStyle ? 27 : 23),
       ),
       keyboardType: keyboard,
       maxLines: maxLines,
@@ -324,15 +463,15 @@ class _EditorState extends State<VisitEditor> {
   }
 
   Widget progress() => Padding(
-    padding: const EdgeInsets.fromLTRB(3, 20, 3, 22),
+    padding: const EdgeInsets.fromLTRB(0, 18, 0, 24),
     child: Row(
       children: [
         for (var i = 0; i < 5; i++) ...[
           if (i > 0)
             Expanded(
               child: Container(
-                height: 2.5,
-                color: i <= step ? gmGold : const Color(0xffd3c9b8),
+                height: 2,
+                color: i <= step ? gmGold : const Color(0xffc9cdd1),
               ),
             ),
           InkWell(
@@ -340,8 +479,8 @@ class _EditorState extends State<VisitEditor> {
             child: Column(
               children: [
                 Container(
-                  width: 32,
-                  height: 32,
+                  width: 42,
+                  height: 42,
                   decoration: BoxDecoration(
                     color: i == step
                         ? gmRed
@@ -349,7 +488,10 @@ class _EditorState extends State<VisitEditor> {
                         ? gmNavy
                         : Colors.white,
                     shape: BoxShape.circle,
-                    border: Border.all(color: gmGold, width: 1.5),
+                    border: Border.all(
+                      color: i == step ? gmGold : const Color(0xffc9cdd1),
+                      width: 1.7,
+                    ),
                     boxShadow: i == step
                         ? const [
                             BoxShadow(color: Color(0x3306233c), blurRadius: 8),
@@ -357,23 +499,26 @@ class _EditorState extends State<VisitEditor> {
                         : null,
                   ),
                   child: Center(
-                    child: i < step
-                        ? const Icon(Icons.check, color: Colors.white, size: 17)
-                        : Text(
-                            '${i + 1}',
-                            style: TextStyle(
-                              color: i == step ? Colors.white : gmNavy,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
+                    child: Icon(
+                      i < step
+                          ? Icons.check_rounded
+                          : const [
+                              Icons.person_outline_rounded,
+                              Icons.layers_outlined,
+                              Icons.straighten_rounded,
+                              Icons.auto_awesome_outlined,
+                              Icons.description_outlined,
+                            ][i],
+                      color: i == step || i < step ? Colors.white : gmNavy,
+                      size: 22,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 5),
+                const SizedBox(height: 7),
                 Text(
                   const ['Cliente', 'Piezas', 'Material', 'IA', 'PDF'][i],
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 10.5,
                     color: i == step ? gmRed : gmNavy,
                     fontWeight: i == step ? FontWeight.w800 : FontWeight.w600,
                   ),
@@ -391,35 +536,37 @@ class _EditorState extends State<VisitEditor> {
     final role = repo.session.demo ? 'medicion' : repo.session.user?['role'];
     final canPropose = canGenerateProposal(role?.toString() ?? '');
     return Scaffold(
-      appBar: gmInnerAppBar(
-        title: const [
-          'Nueva visita',
-          'Piezas y medidas',
-          'Material',
-          'Visualizar con IA',
-          'Propuesta',
-        ][step],
-        leading: IconButton(
-          tooltip: 'Volver',
-          onPressed: () =>
-              step == 0 ? Navigator.pop(context) : moveTo(step - 1),
-          icon: const Icon(Icons.arrow_back),
-        ),
-        actions: [
-          if (step == 4)
-            TextButton(
-              onPressed: busy ? null : saveToAdmin,
-              style: TextButton.styleFrom(foregroundColor: Colors.white),
-              child: Text(
-                repo.session.demo
-                    ? 'Guardar demo'
-                    : visit.synced
-                    ? 'Cerrar'
-                    : 'Guardar en admin',
+      appBar: step == 0
+          ? _visitBrandAppBar(onBack: () => Navigator.pop(context))
+          : gmInnerAppBar(
+              title: const [
+                'Nueva visita',
+                'Piezas y medidas',
+                'Material',
+                'Visualizar con IA',
+                'Propuesta',
+              ][step],
+              leading: IconButton(
+                tooltip: 'Volver',
+                onPressed: () =>
+                    step == 0 ? Navigator.pop(context) : moveTo(step - 1),
+                icon: const Icon(Icons.arrow_back),
               ),
+              actions: [
+                if (step == 4)
+                  TextButton(
+                    onPressed: busy ? null : saveToAdmin,
+                    style: TextButton.styleFrom(foregroundColor: Colors.white),
+                    child: Text(
+                      repo.session.demo
+                          ? 'Guardar demo'
+                          : visit.synced
+                          ? 'Cerrar'
+                          : 'Guardar en admin',
+                    ),
+                  ),
+              ],
             ),
-        ],
-      ),
       bottomNavigationBar: canPropose
           ? Container(
               decoration: const BoxDecoration(
@@ -432,21 +579,23 @@ class _EditorState extends State<VisitEditor> {
               child: SafeArea(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(22, 10, 22, 12),
-                  child: GmAction(
-                    onPressed: busy
-                        ? null
-                        : step == 4
-                        ? openPdf
-                        : next,
-                    icon: step == 4
-                        ? Icons.picture_as_pdf_outlined
-                        : Icons.arrow_forward,
-                    label: step == 4
-                        ? 'Ver PDF completo'
-                        : step == 2
-                        ? 'Calcular propuesta'
-                        : 'Siguiente',
-                  ),
+                  child: step == 0
+                      ? _VisitNextButton(onPressed: busy ? null : next)
+                      : GmAction(
+                          onPressed: busy
+                              ? null
+                              : step == 4
+                              ? openPdf
+                              : next,
+                          icon: step == 4
+                              ? Icons.picture_as_pdf_outlined
+                              : Icons.arrow_forward,
+                          label: step == 4
+                              ? 'Ver PDF completo'
+                              : step == 2
+                              ? 'Calcular propuesta'
+                              : 'Siguiente',
+                        ),
                 ),
               ),
             )
@@ -475,33 +624,89 @@ class _EditorState extends State<VisitEditor> {
                     ),
                   if (busy) const LinearProgressIndicator(),
                   if (step == 0) ...[
-                    const GmInnerHeading(
-                      eyebrow: 'Paso 01 · Nueva visita',
-                      title: 'Datos del',
-                      accent: 'cliente',
-                      subtitle:
-                          'Comencemos por la persona y el espacio que visitaste.',
-                      icon: Icons.person_outline_rounded,
-                    ),
-                    const SizedBox(height: 20),
-                    GmInnerCard(
+                    const Padding(
+                      padding: EdgeInsets.fromLTRB(8, 3, 8, 21),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'INFORMACIÓN DE CONTACTO',
+                          Text.rich(
+                            TextSpan(
+                              children: [
+                                TextSpan(text: 'Datos del '),
+                                TextSpan(
+                                  text: 'cliente',
+                                  style: TextStyle(
+                                    color: gmRed,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                              ],
+                            ),
                             style: TextStyle(
-                              color: Color(0xffa47722),
-                              letterSpacing: 1.5,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
+                              fontFamily: 'Playfair Display',
+                              color: gmNavy,
+                              fontSize: 34,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
-                          const SizedBox(height: 16),
+                          SizedBox(height: 5),
+                          Text(
+                            'Comencemos por la persona y el espacio que visitaste.',
+                            style: TextStyle(
+                              color: Color(0xff526477),
+                              fontSize: 15,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(17, 20, 17, 22),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: .95),
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x2606233c),
+                            blurRadius: 20,
+                            offset: Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 5,
+                                height: 27,
+                                decoration: BoxDecoration(
+                                  color: gmRed,
+                                  borderRadius: BorderRadius.circular(5),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              const Expanded(
+                                child: Text(
+                                  'Información de contacto',
+                                  style: TextStyle(
+                                    color: gmNavy,
+                                    fontSize: 19,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
                           field(
                             'Nombre del cliente',
                             client,
                             icon: Icons.person_outline,
+                            hint: 'Ej. Juan Pérez',
+                            contactStyle: true,
                           ),
                           TextFormField(
                             controller: phone,
@@ -509,9 +714,17 @@ class _EditorState extends State<VisitEditor> {
                             keyboardType: TextInputType.phone,
                             decoration: const InputDecoration(
                               labelText: 'Teléfono',
+                              hintText: 'Ej. 987 654 321',
+                              floatingLabelBehavior:
+                                  FloatingLabelBehavior.always,
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 18,
+                                vertical: 22,
+                              ),
                               prefixIcon: Icon(
                                 Icons.phone_outlined,
                                 color: gmGold,
+                                size: 27,
                               ),
                             ),
                             validator: (v) =>
@@ -524,11 +737,38 @@ class _EditorState extends State<VisitEditor> {
                             'Dirección o distrito',
                             location,
                             icon: Icons.place_outlined,
+                            hint: 'Ej. Av. Principal 123, Lima',
+                            contactStyle: true,
+                          ),
+                          const Padding(
+                            padding: EdgeInsets.only(bottom: 12),
+                            child: Row(
+                              children: [
+                                Expanded(child: Divider(color: gmGold)),
+                                Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 12),
+                                  child: Text(
+                                    'Ambiente',
+                                    style: TextStyle(
+                                      color: gmNavy,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                                Expanded(child: Divider(color: gmGold)),
+                              ],
+                            ),
                           ),
                           DropdownButtonFormField<String>(
                             initialValue: visit.project,
                             decoration: const InputDecoration(
                               labelText: 'Ambiente',
+                              floatingLabelBehavior:
+                                  FloatingLabelBehavior.always,
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 18,
+                                vertical: 22,
+                              ),
                               prefixIcon: Icon(
                                 Icons.home_work_outlined,
                                 color: gmGold,
