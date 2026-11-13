@@ -49,10 +49,22 @@ class _EditorState extends State<VisitEditor> {
       imageUrl =
           '${repo.session.api.endpoint}/api/mobile/visits/${visit.id}/files/${visit.imageFile}';
     }
+    repo.addListener(_syncStatus);
+  }
+
+  void _syncStatus() {
+    if (!mounted || !visit.synced) return;
+    for (final updated in repo.visits) {
+      if (updated.id == visit.id && updated.status != visit.status) {
+        setState(() => visit.status = updated.status);
+        return;
+      }
+    }
   }
 
   @override
   void dispose() {
+    repo.removeListener(_syncStatus);
     _autosave?.cancel();
     if (!visit.synced) {
       collect();

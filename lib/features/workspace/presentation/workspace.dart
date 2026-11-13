@@ -28,6 +28,7 @@ class _WorkspaceState extends State<Workspace> {
   final pages = PageController();
   int tab = 0;
   bool loading = false, _wasOnline = false;
+  DateTime? _lastSync;
   @override
   void initState() {
     super.initState();
@@ -39,7 +40,13 @@ class _WorkspaceState extends State<Workspace> {
 
   void connectionChanged() {
     final online = monitor.state == ServerState.online;
-    if (online && !_wasOnline) unawaited(refresh());
+    if (online &&
+        (!_wasOnline ||
+            _lastSync == null ||
+            DateTime.now().difference(_lastSync!) >=
+                const Duration(seconds: 20))) {
+      unawaited(refresh());
+    }
     _wasOnline = online;
   }
 
@@ -50,6 +57,7 @@ class _WorkspaceState extends State<Workspace> {
       if (!widget.session.demo) await widget.session.verify();
       if (!mounted || widget.session.user == null) return;
       await repo.load();
+      _lastSync = DateTime.now();
     } catch (e) {
       if (mounted) showError(context, e);
     } finally {
@@ -61,7 +69,9 @@ class _WorkspaceState extends State<Workspace> {
     if (!widget.session.canEdit && visit != null) {
       await Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => TrackingDetailPage(visit)),
+        MaterialPageRoute(
+          builder: (_) => TrackingDetailPage(visit, repo: repo),
+        ),
       );
       return;
     }

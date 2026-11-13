@@ -17,6 +17,22 @@ class _TrackingPageState extends State<TrackingPage> {
   String filter = 'Todos';
 
   @override
+  void initState() {
+    super.initState();
+    widget.repo.addListener(_updated);
+  }
+
+  void _updated() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    widget.repo.removeListener(_updated);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final visits = widget.repo.visits.where((v) {
       final text = '${v.client} ${v.project} ${v.material?['name'] ?? ''}'
@@ -88,7 +104,8 @@ class _TrackingPageState extends State<TrackingPage> {
                   onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => TrackingDetailPage(visit),
+                      builder: (_) =>
+                          TrackingDetailPage(visit, repo: widget.repo),
                     ),
                   ),
                 ),
@@ -102,10 +119,22 @@ class _TrackingPageState extends State<TrackingPage> {
 
 class TrackingDetailPage extends StatelessWidget {
   final Visit visit;
-  const TrackingDetailPage(this.visit, {super.key});
+  final VisitRepository repo;
+  const TrackingDetailPage(this.visit, {super.key, required this.repo});
 
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: repo,
+    builder: (context, _) {
+      final current = repo.visits.firstWhere(
+        (item) => item.id == visit.id,
+        orElse: () => visit,
+      );
+      return _body(context, current);
+    },
+  );
+
+  Widget _body(BuildContext context, Visit visit) => Scaffold(
     appBar: gmInnerAppBar(title: 'Detalle del trabajo'),
     body: GmInnerBackground(
       child: ListView(
