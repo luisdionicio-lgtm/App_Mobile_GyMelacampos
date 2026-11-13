@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../core/api.dart';
 import '../../../core/brand_ui.dart';
 import '../../../core/connection.dart';
@@ -8,6 +9,155 @@ class SettingsPage extends StatelessWidget {
   final Session session;
   final ConnectionMonitor monitor;
   const SettingsPage({super.key, required this.session, required this.monitor});
+
+  Future<void> changeAvatar(BuildContext context, ImageSource source) async {
+    try {
+      final image = await ImagePicker().pickImage(
+        source: source,
+        maxWidth: 800,
+        imageQuality: 82,
+      );
+      if (image == null) return;
+      await session.uploadAvatar(image.path);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Foto de perfil actualizada')),
+        );
+      }
+    } catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo guardar la foto: $error')),
+        );
+      }
+    }
+  }
+
+  Future<void> removeAvatar(BuildContext context) async {
+    try {
+      await session.removeAvatar();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Foto de perfil eliminada')),
+        );
+      }
+    } catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo quitar la foto: $error')),
+        );
+      }
+    }
+  }
+
+  void avatarOptions(BuildContext context) {
+    if (session.demo) return;
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const ListTile(
+              title: Text(
+                'Foto de perfil',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined),
+              title: const Text('Tomar foto'),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                changeAvatar(context, ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Elegir de Fotos'),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                changeAvatar(context, ImageSource.gallery);
+              },
+            ),
+            if (session.avatarFile != null)
+              ListTile(
+                leading: const Icon(Icons.delete_outline, color: gmRed),
+                title: const Text('Quitar foto'),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  removeAvatar(context);
+                },
+              ),
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget profileAvatar(BuildContext context) => ListenableBuilder(
+    listenable: session,
+    builder: (context, _) => GestureDetector(
+      onTap: session.demo ? null : () => avatarOptions(context),
+      child: Semantics(
+        button: !session.demo,
+        label: 'Cambiar foto de perfil',
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: gmRed,
+                shape: BoxShape.circle,
+                border: Border.all(color: gmGold, width: 2),
+              ),
+              padding: const EdgeInsets.all(2),
+              child: ClipOval(
+                child: session.avatarFile == null
+                    ? const Icon(
+                        Icons.person_outline,
+                        color: Colors.white,
+                        size: 34,
+                      )
+                    : Image.network(
+                        '${session.api.endpoint}/api/mobile/avatar?v=${session.avatarFile}',
+                        headers: {
+                          if (session.api.cookie != null)
+                            'Cookie': session.api.cookie!,
+                        },
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => const Icon(
+                          Icons.person_outline,
+                          color: Colors.white,
+                          size: 34,
+                        ),
+                      ),
+              ),
+            ),
+            if (!session.demo)
+              Positioned(
+                right: -4,
+                bottom: -4,
+                child: Container(
+                  width: 23,
+                  height: 23,
+                  decoration: BoxDecoration(
+                    color: gmGold,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: gmNavy, width: 1.5),
+                  ),
+                  child: const Icon(Icons.camera_alt, color: gmNavy, size: 14),
+                ),
+              ),
+          ],
+        ),
+      ),
+    ),
+  );
 
   void sheet(BuildContext context, String title, Widget content) =>
       showModalBottomSheet<void>(
@@ -73,20 +223,7 @@ class SettingsPage extends StatelessWidget {
                 Positioned.fill(child: CustomPaint(painter: _AccountCorner())),
                 Row(
                   children: [
-                    Container(
-                      width: 64,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        color: gmRed,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: gmGold, width: 2),
-                      ),
-                      child: const Icon(
-                        Icons.person_outline,
-                        color: Colors.white,
-                        size: 34,
-                      ),
-                    ),
+                    profileAvatar(context),
                     const SizedBox(width: 14),
                     Container(width: 1, height: 75, color: gmGold),
                     const SizedBox(width: 14),

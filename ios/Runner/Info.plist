@@ -26,6 +26,10 @@
 	<true/>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>G&amp;M Campo necesita conectarse al servidor de la empresa en tu red Wi-Fi para consultar visitas, materiales y propuestas.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>G&amp;M Campo usa la cámara para tomar tu foto de perfil y fotos de las visitas técnicas.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>G&amp;M Campo accede a Fotos para elegir tu foto de perfil y adjuntar imágenes a las visitas técnicas.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

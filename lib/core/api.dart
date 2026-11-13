@@ -239,6 +239,50 @@ class Api {
     }
   }
 
+  Future<String> uploadAvatar(String file) async {
+    await selectNetwork();
+    final bytes = await File(file).readAsBytes();
+    if (bytes.length > 5 * 1024 * 1024) {
+      throw Exception('La foto de perfil debe pesar menos de 5 MB');
+    }
+    final png =
+        bytes.length >= 8 &&
+        bytes[0] == 137 &&
+        bytes[1] == 80 &&
+        bytes[2] == 78 &&
+        bytes[3] == 71;
+    final jpg = bytes.length >= 2 && bytes[0] == 255 && bytes[1] == 216;
+    if (!png && !jpg) throw Exception('Usa una foto JPG o PNG');
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$endpoint/api/mobile/avatar'),
+    );
+    if (cookie != null) request.headers['Cookie'] = cookie!;
+    request.files.add(
+      http.MultipartFile.fromBytes(
+        'file',
+        bytes,
+        filename: png ? 'Perfil.png' : 'Perfil.jpg',
+        contentType: MediaType('image', png ? 'png' : 'jpeg'),
+      ),
+    );
+    final response = await http.Response.fromStream(
+      await request.send().timeout(const Duration(seconds: 45)),
+    );
+    final data = jsonDecode(utf8.decode(response.bodyBytes));
+    if (response.statusCode >= 400) {
+      throw ApiException(
+        data['error'] ?? 'No se pudo guardar la foto',
+        response.statusCode,
+      );
+    }
+    return data['avatarFile'] as String;
+  }
+
+  Future<void> removeAvatar() async {
+    await call('/mobile/avatar', method: 'DELETE');
+  }
+
   Future<void> logout() async {
     try {
       await call('/auth/logout', method: 'POST');
@@ -256,6 +300,23 @@ class Session extends ChangeNotifier {
   bool demo = false;
   bool get canEdit =>
       demo || ['admin', 'medicion', 'cotizacion'].contains(user?['role']);
+  String? get avatarFile => user?['avatarFile'] as String?;
+  Future<void> uploadAvatar(String file) async {
+    if (demo) return;
+    final id = await api.uploadAvatar(file);
+    user = {...?user, 'avatarFile': id};
+    await Api.storage.write(key: profileKey, value: jsonEncode(user));
+    notifyListeners();
+  }
+
+  Future<void> removeAvatar() async {
+    if (demo) return;
+    await api.removeAvatar();
+    user = {...?user, 'avatarFile': null};
+    await Api.storage.write(key: profileKey, value: jsonEncode(user));
+    notifyListeners();
+  }
+
   String get profileKey => 'profile:${api.storageBase}';
   Future<void> restore() async {
     if (api.cookie == null) return;
