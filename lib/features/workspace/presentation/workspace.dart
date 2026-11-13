@@ -14,7 +14,6 @@ import '../../visits/presentation/visit_editor.dart';
 import '../../visits/presentation/visits_page.dart';
 import '../../visits/presentation/tracking_page.dart';
 import 'home_page.dart';
-import 'widgets.dart';
 
 class Workspace extends StatefulWidget {
   final Session session;
@@ -135,7 +134,6 @@ class _WorkspaceState extends State<Workspace> {
     ];
     final content = Column(
       children: [
-        if (!widget.session.demo) ConnectionStrip(monitor, prominent: tab == 0),
         if (loading) const LinearProgressIndicator(minHeight: 2),
         Expanded(
           child: RefreshIndicator(
@@ -217,15 +215,44 @@ class _WorkspaceState extends State<Workspace> {
                   const ['Inicio', 'Mis visitas', 'Materiales', 'Cuenta'][tab],
                 ),
           actions: [
-            IconButton(
-              tooltip: 'Actualizar datos',
-              onPressed: loading
-                  ? null
-                  : () async {
-                      await monitor.check();
-                      await refresh();
-                    },
-              icon: const Icon(Icons.sync),
+            ListenableBuilder(
+              listenable: monitor,
+              builder: (context, _) {
+                final state = monitor.state;
+                final connected = state == ServerState.online;
+                final checking = state == ServerState.checking;
+                return IconButton(
+                  tooltip: widget.session.demo
+                      ? 'Actualizar datos de la demo'
+                      : checking
+                      ? 'Comprobando conexión con la web'
+                      : connected
+                      ? 'Conectado con la web G&M. Toca para actualizar'
+                      : 'Sin conexión con la web. Toca para reintentar',
+                  onPressed: loading
+                      ? null
+                      : () async {
+                          await monitor.check();
+                          await refresh();
+                        },
+                  icon: Icon(
+                    widget.session.demo
+                        ? Icons.sync
+                        : checking
+                        ? Icons.cloud_sync_outlined
+                        : connected
+                        ? Icons.cloud_done_rounded
+                        : Icons.cloud_off_rounded,
+                    color: widget.session.demo
+                        ? Colors.white
+                        : checking
+                        ? const Color(0xffefc967)
+                        : connected
+                        ? const Color(0xff51de99)
+                        : const Color(0xffff777b),
+                  ),
+                );
+              },
             ),
           ],
         ),
