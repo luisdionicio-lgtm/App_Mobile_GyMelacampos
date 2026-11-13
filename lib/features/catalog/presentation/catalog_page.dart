@@ -16,6 +16,7 @@ class CatalogPage extends StatefulWidget {
 class _CatalogState extends State<CatalogPage> {
   String search = '', category = 'Mármol';
   bool favoritesOnly = false;
+  bool gridView = true;
   final searchController = TextEditingController();
   @override
   void dispose() {
@@ -23,53 +24,133 @@ class _CatalogState extends State<CatalogPage> {
     super.dispose();
   }
 
-  Widget heading(AppPreferences prefs) => Padding(
-    padding: const EdgeInsets.fromLTRB(22, 22, 22, 0),
+  Widget heading() => Padding(
+    padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const GmPageTitle(
-          'Nuestro catálogo',
-          subtitle: 'Explora los materiales disponibles en G&M.',
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 5,
+              height: 48,
+              decoration: BoxDecoration(
+                color: gmRed,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: 'Nuestro ',
+                          style: TextStyle(color: gmNavy),
+                        ),
+                        TextSpan(
+                          text: 'catálogo',
+                          style: TextStyle(color: gmRed),
+                        ),
+                      ],
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: 'Playfair Display',
+                      fontSize: 29,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  const Text(
+                    'Explora los materiales disponibles en G&M.',
+                    style: TextStyle(fontSize: 14, color: Color(0xff626d78)),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 20),
-        TextField(
-          controller: searchController,
-          onChanged: (v) => setState(() => search = v),
-          decoration: const InputDecoration(
-            hintText: 'Buscar material por nombre o veta',
-            prefixIcon: Icon(Icons.search),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(22),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x3006233c),
+                blurRadius: 12,
+                offset: Offset(0, 5),
+              ),
+            ],
+          ),
+          child: TextField(
+            controller: searchController,
+            onChanged: (v) => setState(() => search = v),
+            textInputAction: TextInputAction.search,
+            decoration: InputDecoration(
+              hintText: 'Buscar material por nombre o veta...',
+              hintStyle: const TextStyle(
+                fontSize: 14,
+                color: Color(0xff64707c),
+              ),
+              prefixIcon: const Icon(Icons.search, color: gmNavy),
+              suffixIcon: search.isEmpty
+                  ? null
+                  : IconButton(
+                      tooltip: 'Limpiar búsqueda',
+                      onPressed: () {
+                        searchController.clear();
+                        setState(() => search = '');
+                      },
+                      icon: const Icon(Icons.close, color: gmNavy),
+                    ),
+              filled: true,
+              fillColor: Colors.white.withValues(alpha: .92),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 15,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(22),
+                borderSide: const BorderSide(color: gmGold, width: 1.8),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(22),
+                borderSide: const BorderSide(color: gmRed, width: 2),
+              ),
+            ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
             children: [
-              FilterChip(
-                avatar: Icon(
-                  favoritesOnly ? Icons.favorite : Icons.favorite_border,
-                  size: 18,
-                ),
-                label: const Text('Favoritos'),
+              _CatalogFilter(
+                label: 'Favoritos',
+                icon: favoritesOnly ? Icons.favorite : Icons.favorite_border,
                 selected: favoritesOnly,
-                onSelected: (v) => setState(() => favoritesOnly = v),
+                onTap: () => setState(() => favoritesOnly = !favoritesOnly),
               ),
-              const SizedBox(width: 8),
               for (final value in [
                 'Mármol',
                 'Granito',
                 'Cuarzo',
                 'Sinterizada',
-              ])
-                Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: ChoiceChip(
-                    label: Text(value),
-                    selected: category == value,
-                    onSelected: (_) => setState(() => category = value),
-                  ),
+              ]) ...[
+                const SizedBox(width: 9),
+                _CatalogFilter(
+                  label: value,
+                  icon: category == value ? Icons.check : _categoryIcon(value),
+                  selected: category == value,
+                  onTap: () => setState(() => category = value),
                 ),
+              ],
             ],
           ),
         ),
@@ -78,10 +159,10 @@ class _CatalogState extends State<CatalogPage> {
     ),
   );
   Widget tile(Map<String, dynamic> material, AppPreferences prefs) {
-    final scheme = Theme.of(context).colorScheme;
+    final favorite = prefs.favorites.contains(material['id']);
     return Material(
-      color: scheme.surfaceContainerLowest,
-      borderRadius: BorderRadius.circular(14),
+      color: gmNavy,
+      borderRadius: BorderRadius.circular(22),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () => Navigator.push(
@@ -91,66 +172,105 @@ class _CatalogState extends State<CatalogPage> {
                 MaterialPage(material, repo: widget.repo, onUse: widget.onUse),
           ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Stack(
-              children: [
-                Hero(
-                  tag: 'material-${material['id']}',
-                  child: Image.network(
-                    '${widget.repo.session.api.endpoint}${material['img']}',
-                    height: 135,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, e, s) => SizedBox(
-                      height: 135,
-                      child: Center(
-                        child: Icon(
-                          Icons.layers_outlined,
-                          color: scheme.primary,
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: gmGold, width: 1.7),
+            borderRadius: BorderRadius.circular(22),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Hero(
+                      tag: 'material-${material['id']}',
+                      child: Image.network(
+                        '${widget.repo.session.api.endpoint}${material['img']}',
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, e, s) => const Center(
+                          child: Icon(Icons.layers_outlined, color: gmGold),
                         ),
                       ),
                     ),
-                  ),
-                ),
-                Positioned(
-                  top: 4,
-                  right: 4,
-                  child: IconButton.filledTonal(
-                    tooltip: prefs.favorites.contains(material['id'])
-                        ? 'Quitar de favoritos'
-                        : 'Agregar a favoritos',
-                    onPressed: () => prefs.toggleFavorite(material['id']),
-                    icon: Icon(
-                      prefs.favorites.contains(material['id'])
-                          ? Icons.favorite
-                          : Icons.favorite_border,
-                      size: 20,
+                    Positioned(
+                      top: 9,
+                      right: 9,
+                      child: IconButton.filled(
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: favorite ? gmRed : gmNavy,
+                        ),
+                        tooltip: favorite
+                            ? 'Quitar de favoritos'
+                            : 'Agregar a favoritos',
+                        onPressed: () => prefs.toggleFavorite(material['id']),
+                        icon: Icon(
+                          favorite ? Icons.favorite : Icons.favorite_border,
+                          size: 20,
+                        ),
+                      ),
                     ),
+                  ],
+                ),
+              ),
+              Container(
+                height: 64,
+                decoration: const BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage('assets/login-navy-marble.jpg'),
+                    fit: BoxFit.cover,
                   ),
                 ),
-              ],
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
-              child: Text(
-                material['name'],
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleSmall!.copyWith(fontWeight: FontWeight.w700),
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: CustomPaint(painter: _CatalogCorner()),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 9, 18, 7),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            material['name'],
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.layers_outlined,
+                                color: Colors.white,
+                                size: 15,
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                material['cat'],
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Text(
-                material['cat'],
-                style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -173,13 +293,36 @@ class _CatalogState extends State<CatalogPage> {
       key: const PageStorageKey('catalog'),
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
-        SliverToBoxAdapter(child: heading(prefs)),
+        SliverToBoxAdapter(child: heading()),
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(22, 0, 22, 16),
           sliver: SliverToBoxAdapter(
-            child: Text(
-              '${materials.length} materiales',
-              style: Theme.of(context).textTheme.labelLarge,
+            child: Row(
+              children: [
+                const Icon(Icons.grid_view_rounded, color: gmNavy),
+                const SizedBox(width: 9),
+                Text(
+                  '${materials.length} materiales',
+                  style: const TextStyle(
+                    color: Color(0xff626d78),
+                    fontSize: 15,
+                  ),
+                ),
+                const Spacer(),
+                _ViewToggle(
+                  icon: Icons.grid_view_rounded,
+                  selected: gridView,
+                  tooltip: 'Ver cuadrícula',
+                  onTap: () => setState(() => gridView = true),
+                ),
+                const SizedBox(width: 5),
+                _ViewToggle(
+                  icon: Icons.view_list_rounded,
+                  selected: !gridView,
+                  tooltip: 'Ver lista',
+                  onTap: () => setState(() => gridView = false),
+                ),
+              ],
             ),
           ),
         ),
@@ -195,23 +338,136 @@ class _CatalogState extends State<CatalogPage> {
           ),
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(22, 0, 22, 28),
-          sliver: SliverLayoutBuilder(
-            builder: (c, constraints) => SliverGrid.builder(
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: constraints.crossAxisExtent >= 700 ? 3 : 2,
-                mainAxisExtent:
-                    MediaQuery.textScalerOf(context).scale(82) + 145,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 18,
-              ),
-              itemCount: materials.length,
-              itemBuilder: (c, i) => tile(materials[i], prefs),
-            ),
-          ),
+          sliver: gridView
+              ? SliverLayoutBuilder(
+                  builder: (c, constraints) => SliverGrid.builder(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: constraints.crossAxisExtent >= 700
+                          ? 3
+                          : 2,
+                      mainAxisExtent:
+                          MediaQuery.textScalerOf(context).scale(64) + 137,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 18,
+                    ),
+                    itemCount: materials.length,
+                    itemBuilder: (c, i) => tile(materials[i], prefs),
+                  ),
+                )
+              : SliverList.separated(
+                  itemCount: materials.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 14),
+                  itemBuilder: (c, i) =>
+                      SizedBox(height: 190, child: tile(materials[i], prefs)),
+                ),
         ),
       ],
     );
   }
+}
+
+IconData _categoryIcon(String category) => switch (category) {
+  'Cuarzo' => Icons.diamond_outlined,
+  'Granito' => Icons.dashboard_outlined,
+  _ => Icons.layers_outlined,
+};
+
+class _CatalogFilter extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+  const _CatalogFilter({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+  @override
+  Widget build(BuildContext context) => Material(
+    color: selected ? gmRed : Colors.white.withValues(alpha: .88),
+    borderRadius: BorderRadius.circular(24),
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+        decoration: BoxDecoration(
+          border: Border.all(color: selected ? gmRed : gmGold),
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: selected ? Colors.white : gmNavy),
+            const SizedBox(width: 7),
+            Text(
+              label,
+              style: TextStyle(
+                color: selected ? Colors.white : gmNavy,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+class _ViewToggle extends StatelessWidget {
+  final IconData icon;
+  final bool selected;
+  final String tooltip;
+  final VoidCallback onTap;
+  const _ViewToggle({
+    required this.icon,
+    required this.selected,
+    required this.tooltip,
+    required this.onTap,
+  });
+  @override
+  Widget build(BuildContext context) => Tooltip(
+    message: tooltip,
+    child: Material(
+      color: selected ? gmRed : Colors.white.withValues(alpha: .86),
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: gmGold),
+          ),
+          child: Icon(icon, color: selected ? Colors.white : gmNavy, size: 22),
+        ),
+      ),
+    ),
+  );
+}
+
+class _CatalogCorner extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final corner = Path()
+      ..moveTo(size.width - 47, size.height)
+      ..lineTo(size.width, size.height - 42)
+      ..lineTo(size.width, size.height)
+      ..close();
+    canvas.drawPath(corner, Paint()..color = gmRed);
+    canvas.drawLine(
+      Offset(size.width - 50, size.height),
+      Offset(size.width, size.height - 45),
+      Paint()
+        ..color = gmGold
+        ..strokeWidth = 3,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class MaterialPage extends StatelessWidget {
