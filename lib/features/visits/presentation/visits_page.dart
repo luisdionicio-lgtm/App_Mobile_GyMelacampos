@@ -4,7 +4,7 @@ import '../../../core/theme.dart';
 import '../data/visit_repository.dart';
 import '../domain/visit.dart';
 
-const _whiteMarble = 'assets/home-white-gold-marble.png';
+const _navyMarble = 'assets/login-navy-marble.jpg';
 const _blackMarble = 'assets/home-black-gold-marble.png';
 
 class VisitsPage extends StatefulWidget {
@@ -253,10 +253,10 @@ class _VisitCard extends StatelessWidget {
             child: Stack(
               children: [
                 Positioned.fill(
-                  child: Image.asset(_whiteMarble, fit: BoxFit.cover),
+                  child: Image.asset(_navyMarble, fit: BoxFit.cover),
                 ),
                 Positioned.fill(
-                  child: ColoredBox(color: Colors.white.withValues(alpha: .22)),
+                  child: ColoredBox(color: gmNavy.withValues(alpha: .32)),
                 ),
                 const Positioned(right: 0, bottom: 0, child: _VisitCorner()),
                 Padding(
@@ -320,7 +320,7 @@ class _VisitCard extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                color: gmNavy,
+                                color: Colors.white,
                                 fontSize: 17,
                                 fontWeight: FontWeight.w800,
                               ),
@@ -330,7 +330,7 @@ class _VisitCard extends StatelessWidget {
                               children: [
                                 Icon(
                                   _projectIcon(visit.project),
-                                  color: gmNavy,
+                                  color: Colors.white,
                                   size: 16,
                                 ),
                                 const SizedBox(width: 5),
@@ -340,7 +340,7 @@ class _VisitCard extends StatelessWidget {
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
-                                      color: gmNavy,
+                                      color: Color(0xffe8edf5),
                                       fontSize: 12,
                                     ),
                                   ),
@@ -379,7 +379,10 @@ class _VisitCard extends StatelessWidget {
                       if (onDelete != null)
                         PopupMenuButton<String>(
                           tooltip: 'Opciones del borrador',
-                          icon: const Icon(Icons.more_horiz, color: gmNavy),
+                          icon: const Icon(
+                            Icons.more_horiz,
+                            color: Colors.white,
+                          ),
                           onSelected: (_) => onDelete!(),
                           itemBuilder: (_) => const [
                             PopupMenuItem(
@@ -389,7 +392,7 @@ class _VisitCard extends StatelessWidget {
                           ],
                         )
                       else
-                        const Icon(Icons.chevron_right, color: gmNavy),
+                        const Icon(Icons.chevron_right, color: Colors.white),
                     ],
                   ),
                 ),
