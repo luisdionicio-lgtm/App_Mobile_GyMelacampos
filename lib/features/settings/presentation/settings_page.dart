@@ -45,55 +45,124 @@ class SettingsPage extends StatelessWidget {
         'Trabajador';
     return ListView(
       key: const PageStorageKey('settings'),
-      padding: const EdgeInsets.fromLTRB(18, 22, 18, 32),
+      padding: const EdgeInsets.fromLTRB(18, 54, 18, 36),
       children: [
-        GmPanel(
-          child: Row(
-            children: [
-              const CircleAvatar(
-                radius: 28,
-                backgroundColor: gmRed,
-                child: Icon(
-                  Icons.person_outline,
-                  color: Colors.white,
-                  size: 30,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      session.user?['name']?.toString() ?? 'Trabajador',
-                      style: const TextStyle(
-                        color: gmNavy,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 18,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      role,
-                      style: const TextStyle(color: Color(0xff53606b)),
-                    ),
-                    if (!session.demo)
-                      Text(
-                        session.user?['email']?.toString() ?? '',
-                        style: const TextStyle(
-                          color: Color(0xff6c7680),
-                          fontSize: 12,
-                        ),
-                      ),
-                  ],
-                ),
+        Container(
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(23),
+            border: Border.all(color: gmGold, width: 2),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x3c06233c),
+                blurRadius: 13,
+                offset: Offset(0, 7),
               ),
             ],
           ),
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(16, 19, 14, 19),
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/login-navy-marble.jpg'),
+                fit: BoxFit.cover,
+              ),
+            ),
+            child: Stack(
+              children: [
+                Positioned.fill(child: CustomPaint(painter: _AccountCorner())),
+                Row(
+                  children: [
+                    Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: gmRed,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: gmGold, width: 2),
+                      ),
+                      child: const Icon(
+                        Icons.person_outline,
+                        color: Colors.white,
+                        size: 34,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Container(width: 1, height: 75, color: gmGold),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            (session.user?['name']?.toString() ?? 'Trabajador')
+                                .toUpperCase(),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 18,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            role,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                            ),
+                          ),
+                          if (!session.demo) ...[
+                            const SizedBox(height: 5),
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.mail_outline,
+                                  color: Colors.white,
+                                  size: 15,
+                                ),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    session.user?['email']?.toString() ?? '',
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 11.5,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
-        const SizedBox(height: 22),
-        GmPanel(
-          padding: EdgeInsets.zero,
+        const SizedBox(height: 24),
+        Container(
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: .94),
+            borderRadius: BorderRadius.circular(23),
+            border: Border.all(color: gmGold, width: 1.6),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x2506233c),
+                blurRadius: 14,
+                offset: Offset(0, 7),
+              ),
+            ],
+          ),
           child: Column(
             children: [
               _item(
@@ -126,7 +195,7 @@ class SettingsPage extends StatelessWidget {
                   ),
                 ),
               ),
-              const Divider(height: 1),
+              const Divider(height: 1, indent: 14, endIndent: 14),
               _item(
                 Icons.sync,
                 'Sincronización y datos',
@@ -139,7 +208,7 @@ class SettingsPage extends StatelessWidget {
                   ),
                 ),
               ),
-              const Divider(height: 1),
+              const Divider(height: 1, indent: 14, endIndent: 14),
               _item(
                 Icons.palette_outlined,
                 'Apariencia',
@@ -179,7 +248,7 @@ class SettingsPage extends StatelessWidget {
                   ),
                 ),
               ),
-              const Divider(height: 1),
+              const Divider(height: 1, indent: 14, endIndent: 14),
               _item(
                 Icons.help_outline,
                 'Ayuda',
@@ -195,27 +264,104 @@ class SettingsPage extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 24),
-        OutlinedButton.icon(
-          onPressed: session.logout,
-          style: OutlinedButton.styleFrom(
-            foregroundColor: gmRed,
-            side: const BorderSide(color: gmRed),
+        const SizedBox(height: 28),
+        Container(
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xffa00010), gmRed, Color(0xff77000c)],
+            ),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: gmGold, width: 1.7),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x3806233c),
+                blurRadius: 11,
+                offset: Offset(0, 6),
+              ),
+            ],
           ),
-          icon: const Icon(Icons.logout),
-          label: const Text('Cerrar sesión'),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: session.logout,
+              borderRadius: BorderRadius.circular(22),
+              child: const SizedBox(
+                height: 58,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.logout, color: Colors.white),
+                    SizedBox(width: 12),
+                    Text(
+                      'Cerrar sesión',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ),
       ],
     );
   }
 
-  Widget _item(IconData icon, String title, VoidCallback onTap) => ListTile(
-    leading: Icon(icon, color: gmNavy),
-    title: Text(
-      title,
-      style: const TextStyle(color: gmNavy, fontWeight: FontWeight.w600),
-    ),
-    trailing: const Icon(Icons.chevron_right, color: gmNavy),
+  Widget _item(IconData icon, String title, VoidCallback onTap) => InkWell(
     onTap: onTap,
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: const Color(0xfffbe9e7),
+              borderRadius: BorderRadius.circular(13),
+            ),
+            child: Icon(icon, color: gmRed, size: 25),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(
+                color: gmNavy,
+                fontWeight: FontWeight.w700,
+                fontSize: 15,
+              ),
+            ),
+          ),
+          const Icon(Icons.chevron_right, color: gmNavy),
+        ],
+      ),
+    ),
   );
+}
+
+class _AccountCorner extends CustomPainter {
+  const _AccountCorner();
+  @override
+  void paint(Canvas canvas, Size size) {
+    final corner = Path()
+      ..moveTo(size.width - 55, size.height)
+      ..lineTo(size.width, size.height - 60)
+      ..lineTo(size.width, size.height)
+      ..close();
+    canvas.drawPath(corner, Paint()..color = gmRed);
+    canvas.drawLine(
+      Offset(size.width - 58, size.height),
+      Offset(size.width, size.height - 63),
+      Paint()
+        ..color = gmGold
+        ..strokeWidth = 3,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

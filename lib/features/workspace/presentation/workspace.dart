@@ -107,7 +107,7 @@ class _WorkspaceState extends State<Workspace> {
   @override
   Widget build(BuildContext context) {
     final expanded = MediaQuery.sizeOf(context).width >= 700;
-    final brandedPage = tab <= 2;
+    final brandedPage = tab <= 3;
     final preferences = PreferencesScope.of(context);
     final reduce =
         preferences.reduceMotion || MediaQuery.disableAnimationsOf(context);
