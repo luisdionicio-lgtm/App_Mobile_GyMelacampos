@@ -25,7 +25,7 @@ class _CatalogState extends State<CatalogPage> {
   }
 
   Widget heading() => Padding(
-    padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+    padding: const EdgeInsets.fromLTRB(20, 54, 20, 0),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
