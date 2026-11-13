@@ -173,8 +173,8 @@ class _CatalogState extends State<CatalogPage> {
           ),
         ),
         child: Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: gmGold, width: 1.7),
+          foregroundDecoration: BoxDecoration(
+            border: Border.all(color: gmGold, width: 2),
             borderRadius: BorderRadius.circular(22),
           ),
           child: Column(
@@ -219,6 +219,7 @@ class _CatalogState extends State<CatalogPage> {
               Container(
                 height: 64,
                 decoration: const BoxDecoration(
+                  border: Border(top: BorderSide(color: gmGold, width: 1.2)),
                   image: DecorationImage(
                     image: AssetImage('assets/login-navy-marble.jpg'),
                     fit: BoxFit.cover,
