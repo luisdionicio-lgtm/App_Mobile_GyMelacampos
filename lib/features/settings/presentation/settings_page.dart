@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/api.dart';
 import '../../../core/brand_ui.dart';
+import '../../../core/inner_ui.dart';
 import '../../../core/connection.dart';
 import '../../../core/preferences.dart';
 
@@ -164,19 +165,37 @@ class SettingsPage extends StatelessWidget {
         context: context,
         isScrollControlled: true,
         showDragHandle: true,
-        builder: (c) => SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(22, 8, 22, 32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                GmPageTitle(title),
-                const SizedBox(height: 18),
-                content,
-                const SizedBox(height: 20),
-                GmAction(label: 'Entendido', onPressed: () => Navigator.pop(c)),
-              ],
+        backgroundColor: Colors.transparent,
+        builder: (c) => Container(
+          clipBehavior: Clip.antiAlias,
+          decoration: const BoxDecoration(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+            image: DecorationImage(
+              image: AssetImage('assets/home-white-gold-marble.png'),
+              fit: BoxFit.cover,
+            ),
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(22, 8, 22, 32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  GmInnerHeading(
+                    eyebrow: 'Mi cuenta',
+                    title: title,
+                    icon: Icons.tune_rounded,
+                  ),
+                  const SizedBox(height: 18),
+                  GmInnerCard(child: content),
+                  const SizedBox(height: 20),
+                  GmAction(
+                    label: 'Entendido',
+                    onPressed: () => Navigator.pop(c),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

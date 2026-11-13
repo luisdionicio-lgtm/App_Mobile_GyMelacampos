@@ -294,7 +294,7 @@ class _EditorState extends State<VisitEditor> {
       context,
       MaterialPageRoute(
         builder: (_) => Scaffold(
-          appBar: AppBar(title: const Text('Elegir material')),
+          appBar: gmInnerAppBar(title: 'Elegir material'),
           body: CatalogPage(
             repo: repo,
             onUse: (choice) => Navigator.pop(context, choice.material),
@@ -649,84 +649,102 @@ class _EditorState extends State<VisitEditor> {
                       const Note(
                         'Catálogo no disponible. Comprueba la conexión al servidor.',
                       ),
-                    DropdownButtonFormField<String>(
-                      isExpanded: true,
-                      initialValue:
-                          repo.materials.any((m) => m['id'] == visit.materialId)
-                          ? visit.materialId
-                          : null,
-                      decoration: const InputDecoration(
-                        labelText: 'Material del catálogo',
-                      ),
-                      items: repo.materials
-                          .map(
-                            (m) => DropdownMenuItem<String>(
-                              value: m['id'],
-                              child: Text(
-                                '${m['cat']} · ${m['name']}',
-                                overflow: TextOverflow.ellipsis,
+                    GmInnerCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          DropdownButtonFormField<String>(
+                            isExpanded: true,
+                            initialValue:
+                                repo.materials.any(
+                                  (m) => m['id'] == visit.materialId,
+                                )
+                                ? visit.materialId
+                                : null,
+                            decoration: const InputDecoration(
+                              labelText: 'Material del catálogo',
+                            ),
+                            items: repo.materials
+                                .map(
+                                  (m) => DropdownMenuItem<String>(
+                                    value: m['id'],
+                                    child: Text(
+                                      '${m['cat']} · ${m['name']}',
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: editable
+                                ? (value) {
+                                    setState(() {
+                                      visit.materialId = value!;
+                                      visit.material = repo.materials
+                                          .firstWhere((m) => m['id'] == value);
+                                    });
+                                    unawaited(
+                                      loadMaterialTexture(
+                                        visit,
+                                        repo.session.api.base,
+                                      ),
+                                    );
+                                  }
+                                : null,
+                          ),
+                          if (visit.material != null) ...[
+                            const SizedBox(height: 12),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.network(
+                                '${repo.session.api.endpoint}${visit.material!['img']}',
+                                height: 140,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, e, s) => const SizedBox(
+                                  height: 60,
+                                  child: Center(
+                                    child: Icon(Icons.image_outlined),
+                                  ),
+                                ),
                               ),
                             ),
-                          )
-                          .toList(),
-                      onChanged: editable
-                          ? (value) {
-                              setState(() {
-                                visit.materialId = value!;
-                                visit.material = repo.materials.firstWhere(
-                                  (m) => m['id'] == value,
-                                );
-                              });
-                              unawaited(
-                                loadMaterialTexture(
-                                  visit,
-                                  repo.session.api.base,
+                            Text(
+                              '${visit.material?['name']} · ${visit.material?['cat']}',
+                              style: const TextStyle(
+                                color: gmNavy,
+                                fontFamily: 'Playfair Display',
+                                fontSize: 19,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 18),
+                          DropdownButtonFormField<String>(
+                            initialValue: visit.unit,
+                            decoration: const InputDecoration(
+                              labelText: 'Unidad de cotización',
+                            ),
+                            items: const [
+                              DropdownMenuItem(
+                                value: 'm²',
+                                child: Text(
+                                  'm² · área neta de todas las piezas',
                                 ),
-                              );
-                            }
-                          : null,
-                    ),
-                    if (visit.material != null) ...[
-                      const SizedBox(height: 12),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.network(
-                          '${repo.session.api.endpoint}${visit.material!['img']}',
-                          height: 140,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, e, s) => const SizedBox(
-                            height: 60,
-                            child: Center(child: Icon(Icons.image_outlined)),
+                              ),
+                              DropdownMenuItem(
+                                value: 'ML',
+                                child: Text('ML · largo total de las piezas'),
+                              ),
+                            ],
+                            onChanged: editable
+                                ? (v) => setState(() => visit.unit = v!)
+                                : null,
                           ),
-                        ),
+                          const Note(
+                            'Se aplican las tarifas de la web. Los materiales sin precio quedan por evaluar. El área no incluye merma ni optimización de cortes.',
+                          ),
+                        ],
                       ),
-                      Text(
-                        '${visit.material?['name']} · ${visit.material?['cat']}',
-                        style: const TextStyle(fontWeight: FontWeight.w500),
-                      ),
-                    ],
-                    const SizedBox(height: 18),
-                    DropdownButtonFormField<String>(
-                      initialValue: visit.unit,
-                      decoration: const InputDecoration(
-                        labelText: 'Unidad de cotización',
-                      ),
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'm²',
-                          child: Text('m² · área neta de todas las piezas'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'ML',
-                          child: Text('ML · largo total de las piezas'),
-                        ),
-                      ],
-                      onChanged: editable
-                          ? (v) => setState(() => visit.unit = v!)
-                          : null,
-                    ),
-                    const Note(
-                      'Se aplican las tarifas de la web. Los materiales sin precio quedan por evaluar. El área no incluye merma ni optimización de cortes.',
                     ),
                   ],
                   if (step == 3) ...[
@@ -739,30 +757,31 @@ class _EditorState extends State<VisitEditor> {
                       icon: Icons.auto_awesome_outlined,
                     ),
                     const SizedBox(height: 16),
-                    if (imageUrl == null)
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: Image.asset(
-                          'assets/stone.png',
-                          height: 230,
-                          fit: BoxFit.cover,
-                        ),
-                      )
-                    else
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: Image.network(
-                          imageUrl!,
-                          height: 230,
-                          fit: BoxFit.cover,
-                          headers: repo.session.api.cookie == null
-                              ? {}
-                              : {'Cookie': repo.session.api.cookie!},
-                          errorBuilder: (_, e, s) => const Note(
-                            'No se pudo cargar la imagen. Revisa tu sesión.',
-                          ),
-                        ),
+                    GmInnerCard(
+                      padding: const EdgeInsets.all(7),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(15),
+                        child: imageUrl == null
+                            ? Image.asset(
+                                'assets/stone.png',
+                                height: 230,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                              )
+                            : Image.network(
+                                imageUrl!,
+                                height: 230,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                                headers: repo.session.api.cookie == null
+                                    ? {}
+                                    : {'Cookie': repo.session.api.cookie!},
+                                errorBuilder: (_, e, s) => const Note(
+                                  'No se pudo cargar la imagen. Revisa tu sesión.',
+                                ),
+                              ),
                       ),
+                    ),
                     const Note(
                       'Imagen conceptual. No reproduce las medidas exactas ni reemplaza el bosquejo técnico.',
                     ),

@@ -66,6 +66,11 @@ class GmInnerCard extends StatelessWidget {
     padding: padding,
     decoration: BoxDecoration(
       color: Colors.white.withValues(alpha: .95),
+      image: const DecorationImage(
+        image: AssetImage('assets/home-white-gold-marble.png'),
+        fit: BoxFit.cover,
+        opacity: .16,
+      ),
       borderRadius: BorderRadius.circular(22),
       border: Border.all(color: gmGold, width: 1.5),
       boxShadow: const [
