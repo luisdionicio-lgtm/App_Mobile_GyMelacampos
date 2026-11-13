@@ -107,6 +107,7 @@ class _WorkspaceState extends State<Workspace> {
   @override
   Widget build(BuildContext context) {
     final expanded = MediaQuery.sizeOf(context).width >= 700;
+    final brandedPage = tab <= 1;
     final preferences = PreferencesScope.of(context);
     final reduce =
         preferences.reduceMotion || MediaQuery.disableAnimationsOf(context);
@@ -179,7 +180,7 @@ class _WorkspaceState extends State<Workspace> {
       },
       child: Stack(
         children: [
-          if (tab == 0)
+          if (brandedPage)
             Positioned.fill(
               child: Image.asset(
                 'assets/login-white-marble-v2.jpg',
@@ -189,12 +190,12 @@ class _WorkspaceState extends State<Workspace> {
               ),
             ),
           Scaffold(
-            backgroundColor: tab == 0 ? Colors.transparent : null,
+            backgroundColor: brandedPage ? Colors.transparent : null,
             appBar: AppBar(
-              toolbarHeight: tab == 0 ? 96 : null,
-              backgroundColor: tab == 0 ? Colors.transparent : null,
+              toolbarHeight: brandedPage ? 96 : null,
+              backgroundColor: brandedPage ? Colors.transparent : null,
               elevation: 0,
-              flexibleSpace: tab == 0
+              flexibleSpace: brandedPage
                   ? Stack(
                       fit: StackFit.expand,
                       children: [
@@ -217,15 +218,10 @@ class _WorkspaceState extends State<Workspace> {
                       ],
                     )
                   : null,
-              title: tab == 0
+              title: brandedPage
                   ? const Brand(onNavy: true)
                   : Text(
-                      const [
-                        'Inicio',
-                        'Mis visitas',
-                        'Materiales',
-                        'Cuenta',
-                      ][tab],
+                      const ['Inicio', 'Visitas', 'Materiales', 'Cuenta'][tab],
                     ),
               actions: [
                 ListenableBuilder(
@@ -305,13 +301,22 @@ class _WorkspaceState extends State<Workspace> {
             floatingActionButton: tab == 1 && widget.session.canEdit
                 ? FloatingActionButton.extended(
                     onPressed: () => open(null),
-                    icon: const Icon(Icons.add),
-                    label: const Text('Nueva visita'),
+                    backgroundColor: gmRed,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(21),
+                      side: const BorderSide(color: gmGold, width: 2),
+                    ),
+                    icon: const Icon(Icons.add, size: 25),
+                    label: const Text(
+                      'Nueva visita',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
                   )
                 : null,
             bottomNavigationBar: expanded
                 ? null
-                : tab == 0
+                : brandedPage
                 ? _HomeNavigationBar(selected: tab, onSelect: select)
                 : NavigationBar(
                     animationDuration: Duration(milliseconds: reduce ? 0 : 180),
