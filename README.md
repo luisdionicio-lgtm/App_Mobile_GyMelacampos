@@ -165,3 +165,5 @@ Para esta laptop Windows compilar con `--dart-define=API_BASE_URL=https://192.16
 Si otro contenedor ocupa específicamente `192.168.18.103:8443`, la app puede recibir el certificado de otro sistema aunque G&M publique en `0.0.0.0:8443`. Detener el proyecto en conflicto o asignarle otro puerto antes de probar; nunca desactivar la validación TLS. El APK sigue siendo una distribución interna con firma de desarrollo.
 
 Validación de esta entrega: 17 pruebas Flutter y recorridos en Motorola edge 50 fusion (Android 16) del formulario y la propuesta PDF, más acceso HTTPS y catálogo real por Wi-Fi de casa. El acceso del punto de acceso Motorola se conserva; no se vuelve a afirmar una prueba de calle si no se cambia a esa red. La imagen IA sigue dependiendo de una clave válida y cuota del backend.
+
+Android 1.4.1 añade iconos adaptables (Android 8 o superior) y conserva el icono clásico para versiones anteriores. Se generan desde `tool/app-icon-source.png` con `dart run tool/android_brand_icons.dart`; este script solo modifica recursos Android y no altera los iconos iOS.
