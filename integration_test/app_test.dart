@@ -25,7 +25,7 @@ class OfflineDemoApi extends Api {
 void main() {
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   testWidgets(
-    'iPhone: pantallas de visita y propuesta en demo',
+    'Android e iOS: pantallas de visita y propuesta en demo',
     (tester) async {
       await configureLocalTls();
       final api = OfflineDemoApi();
@@ -82,7 +82,7 @@ void main() {
         await tester.ensureVisible(find.text('Explorar demo de trabajador'));
         await tester.tap(find.text('Explorar demo de trabajador'));
         await tester.pumpAndSettle(const Duration(seconds: 1));
-        expect(find.textContaining('Hola, Trabajador'), findsOneWidget);
+        expect(find.textContaining('Hola, TRABAJADOR', findRichText: true), findsOneWidget);
         await capture('01-inicio');
 
         await tester.tap(find.text('Materiales').last);
@@ -129,11 +129,11 @@ void main() {
             value: previousPrefs,
           );
         }
-      }
-      if (previousCatalog == null) {
-        await Api.storage.delete(key: catalogKey);
-      } else {
-        await Api.storage.write(key: catalogKey, value: previousCatalog);
+        if (previousCatalog == null) {
+          await Api.storage.delete(key: catalogKey);
+        } else {
+          await Api.storage.write(key: catalogKey, value: previousCatalog);
+        }
       }
     },
     timeout: const Timeout(Duration(minutes: 4)),

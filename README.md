@@ -154,3 +154,14 @@ cd D:\GyMelacampos
 ```
 
 Si el equipo está conectado a casa, usar `-ServerIP 192.168.18.103`. Este parámetro verifica que la interfaz esté conectada antes de configurar la regla. Después, `docker compose up -d` conserva ambas entradas sin reconfiguración por cambio de red. Las IP deben seguir siendo las indicadas; si DHCP las cambia, se deben actualizar las direcciones, la regla y el APK. No hay descubrimiento automático de IP ni acceso remoto por internet. El teléfono debe poder alcanzar la PC por la red elegida, y la PC y Docker deben permanecer encendidos. No requiere USB ni modo desarrollador.
+
+
+## Android 1.4: diseño compartido con iOS
+
+La actualización Android incorpora los diseños Flutter compartidos de acceso, Inicio, Visitas, catálogo con filtros, Cuenta con foto opcional, seguimiento y formulario por pasos. La propuesta PDF reúne cotización y bosquejos con identidad G&M. El catálogo y los estados proceden del backend web actual; las medidas siguen ingresándose manualmente. No se modifica la firma ni la configuración nativa de iOS para esta entrega Android.
+
+Para esta laptop Windows compilar con `--dart-define=API_BASE_URL=https://192.168.18.103:8443`. Se conservan las conexiones de casa y Motorola, y los certificados públicos ya incluidos. No reinstalar borrando datos. La actualización usa el mismo identificador y firma interna para conservar almacenamiento local.
+
+Si otro contenedor ocupa específicamente `192.168.18.103:8443`, la app puede recibir el certificado de otro sistema aunque G&M publique en `0.0.0.0:8443`. Detener el proyecto en conflicto o asignarle otro puerto antes de probar; nunca desactivar la validación TLS. El APK sigue siendo una distribución interna con firma de desarrollo.
+
+Validación de esta entrega: 17 pruebas Flutter y recorridos en Motorola edge 50 fusion (Android 16) del formulario y la propuesta PDF, más acceso HTTPS y catálogo real por Wi-Fi de casa. El acceso del punto de acceso Motorola se conserva; no se vuelve a afirmar una prueba de calle si no se cambia a esa red. La imagen IA sigue dependiendo de una clave válida y cuota del backend.
